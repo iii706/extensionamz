@@ -7,21 +7,21 @@ $(document).ready(function(){
 
   $("#start").click(function(){
 
-    for (var page = page_start; page <= page_end; page++  ){
-        //list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595349&rnid=1249051011&ref=sr_pg_<pre_page>"
-        list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595495&rnid=386465011&ref=sr_pg_<pre_page>"
-        //list_url = "https://www.amazon.com/s?k=made+in+usa&i=kitchen&rh=n%3A284507&dc&page="+page.toString()+"&crid=29NW53ZKVYBMP&qid=1652338068&rnid=2941120011&sprefix=made+in+usa%2Caps%2C565&ref=sr_pg_"+(page-1).toString()
-        let list_url_obj = {
-        }
-        list_url_obj['url'] = list_url.replace("<page>",page.toString()).replace("<pre_page>",(page-1).toString());
-        list_url_obj['type'] = "list_url";
-        list_urls.push(list_url_obj);
+for (var page = page_start; page <= page_end; page++  ){
+    //list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595349&rnid=1249051011&ref=sr_pg_<pre_page>"
+    list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595495&rnid=386465011&ref=sr_pg_<pre_page>"
+    //list_url = "https://www.amazon.com/s?k=made+in+usa&i=kitchen&rh=n%3A284507&dc&page="+page.toString()+"&crid=29NW53ZKVYBMP&qid=1652338068&rnid=2941120011&sprefix=made+in+usa%2Caps%2C565&ref=sr_pg_"+(page-1).toString()
+    let list_url_obj = {
     }
+    list_url_obj['url'] = list_url.replace("<page>",page.toString()).replace("<pre_page>",(page-1).toString());
+    list_url_obj['type'] = "list_url";
+    list_urls.push(list_url_obj);
+}
 
 
-    let detail_urls = [];
+let detail_urls = [];
 
-    add_log_text("开始执行。。。",list_urls.length);
+add_log_text("开始执行。。。",list_urls.length);
 
 
 let detailRequest = {
@@ -60,8 +60,8 @@ let detailRequest = {
     start: function() {
         for(let item of this.queue) {
             let url_item = this.getUrl()
-            if (url_item != undefined && url_item.type == "detail_url" && stop_flag == true){
-                console.log("等待请示数量：",this.waitqueue.length,listRequest.waitqueue.length,url_item.url);
+            if (stop_flag == true && url_item != undefined){
+                console.log("等待请示数量：",item.token,this.waitqueue.length,listRequest.waitqueue.length,url_item.url);
 
                item.request(url_item['url']).then(res => {
                 var jqueryObj = $(res);
@@ -82,27 +82,27 @@ let detailRequest = {
                 //post_to_locale(data);
                 res = null;
                 this.backToken(item.token); // 令牌归还
-
+                console.log("token_length:",this.state.length);
                 if(this.waitqueue.length > 0) {
                     var wait = this.waitqueue.splice(0, 1);
                     this.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
                     this.start(); // 重新开始执行队列
                 }
-                if(this.waitqueue.length == 5){
-                    console.log(this.waitqueue);
-                }
-                if (this.waitqueue.length <= this.state.length+10){
+                console.log("token_length:",this.state.length);
+                if (this.state.length == 4){
                     console.log("需要采集列表页了");
                     if (listRequest.waitqueue.length > 0){
                         var wait = listRequest.waitqueue.splice(0, 1);
                         listRequest.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
-                        //detail_start_flag = true;
+                        detail_start_flag = true;
                         listRequest.start(); // 重新开始执行队列
                     }
                 }
 
 
                 });
+            } else {
+               console.log("异常：",this.state);
             }
         }
     },
@@ -168,6 +168,7 @@ let listRequest = {
                                 'price':price,
                                 'review_counts':review_counts,
                             }
+                            //console.log("review_counts结果 ：",parseInt(review_counts) < min_review_counts,parseInt(review_counts),min_review_counts);
                             if(parseInt(review_counts) < min_review_counts){ //review数设置
                                  detail_urls.push(detail_url_obj);
                                  next_page_detail.push(detail_url_obj);
@@ -177,10 +178,11 @@ let listRequest = {
                     }
 
                     res = null;
+                    console.log("next_page_detail",next_page_detail);
                     if(next_page_detail.length == 0){ //整页的产品数据都是大于设定的review_counts值的时候
                         detail_start_flag = true;
                     }
-                    for (var j = 0; j <= next_page_detail.length; j++){
+                    for (var j = 0; j < next_page_detail.length; j++){
                             function f1(url) {
                             return new Promise((resolve, reject) => {
                                 resolve(ajax_get(url))
@@ -188,7 +190,10 @@ let listRequest = {
                             }
                             detailRequest.pushQueue([f1]);
                         }
-
+//                    console.log(detailRequest.waitqueue);
+//                    console.log(detailRequest.queue);
+//                    console.log(detail_urls);
+//                    return;
                     if(detail_start_flag){
                         detailRequest.start();
                         detail_start_flag = false;
