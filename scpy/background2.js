@@ -7,8 +7,6 @@ $(document).ready(function(){
 
   $("#start").click(function(){
 
-
-
     for (var page = page_start; page <= page_end; page++  ){
         //list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595349&rnid=1249051011&ref=sr_pg_<pre_page>"
         list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595495&rnid=386465011&ref=sr_pg_<pre_page>"
@@ -24,7 +22,7 @@ $(document).ready(function(){
     let detail_urls = [];
 
     add_log_text("开始执行。。。",list_urls.length);
-    //console.log(list_urls);
+
 
 let detailRequest = {
     urls:detail_urls,
@@ -77,29 +75,30 @@ let detailRequest = {
 
                 //add_log_text(data.image+"---"+data.asin+"--"+data.title.slice(0,20)+"..."+data.price+"---",this.waitqueue.length);
                 if(url_item.asin != undefined && data.desc != undefined && data.desc != ""){
-                    //console.log(data);
-                    //add_log_text(data.image+"---"+data.asin+"--"+data.title.slice(0,20)+"..."+data.price+"---",this.waitqueue.length);
-                    //console.log("保存到数据库");
-                    //console.log(data)
+
                     post_to_locale(data);
                 }
 
                 //post_to_locale(data);
                 res = null;
                 this.backToken(item.token); // 令牌归还
-                console.log("执行12421：",this.waitqueue.length,this.waitqueue);
+
                 if(this.waitqueue.length > 0) {
                     var wait = this.waitqueue.splice(0, 1);
                     this.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
                     this.start(); // 重新开始执行队列
-                } else {
-                    console.log("执行12422：",this.waitqueue.length,this.waitqueue);
-                    if(listRequest.waitqueue.length > 0) {
+                }
+                if(this.waitqueue.length == 5){
+                    console.log(this.waitqueue);
+                }
+                if (this.waitqueue.length <= this.state.length+10){
+                    console.log("需要采集列表页了");
+                    if (listRequest.waitqueue.length > 0){
                         var wait = listRequest.waitqueue.splice(0, 1);
                         listRequest.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
+                        //detail_start_flag = true;
                         listRequest.start(); // 重新开始执行队列
                     }
-
                 }
 
 
@@ -151,16 +150,14 @@ let listRequest = {
             let url_item = this.getUrl()
             if (url_item != undefined && stop_flag == true){
                console.log("正在采集：",detailRequest.waitqueue.length,detail_start_flag,url_item.url);
-               if(detailRequest.waitqueue.length == 0){
-                   detail_start_flag = true; //防止等待队列没有数据停止。
-               }
+               add_log_text("正在采集："+detailRequest.waitqueue.length.toString()+"---"+detail_start_flag.toString()+'----'+url_item.url);
                item.request(url_item.url).then(res => {
                     var jqueryObj = $(res);
                     var rets = jqueryObj.find("#search > div.s-desktop-width-max.s-desktop-content.s-opposite-dir.sg-row > div.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span:nth-child(4) > div.s-main-slot.s-result-list.s-search-results.sg-row > div")
                     var next_page_detail = [];
                     for(var i = 0; i <= rets.length; i++){
                         var asin = $(rets[i]).attr("data-asin");
-                        if(asin){
+                        if(asin != "" && asin != undefined){
                             var review_counts = $(rets[i]).find("span.a-size-base.s-underline-text").text();
                             var price = $(rets[i]).find("div.a-row.a-size-base.a-color-base > a > span:nth-child(1) > span.a-offscreen").text();
                             //console.log(asin,review_counts,price);
@@ -178,12 +175,11 @@ let listRequest = {
                         }
 
                     }
-                    //add_log_text(detail_urls.length);
-
 
                     res = null;
-
-                    //console.log(detail_urls);
+                    if(next_page_detail.length == 0){ //整页的产品数据都是大于设定的review_counts值的时候
+                        detail_start_flag = true;
+                    }
                     for (var j = 0; j <= next_page_detail.length; j++){
                             function f1(url) {
                             return new Promise((resolve, reject) => {
@@ -197,14 +193,8 @@ let listRequest = {
                         detailRequest.start();
                         detail_start_flag = false;
                     }
-
-                    //post_to_locale(data);
                     this.backToken(item.token); // 令牌归还
-                    if(detailRequest.waitqueue.length < 10 && this.waitqueue.length > 0) {
-                        var wait = listRequest.waitqueue.splice(0, 1);
-                        listRequest.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
-                    }
-                    listRequest.start(); // 重新开始执行队列
+
                 });
             }
         }

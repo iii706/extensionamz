@@ -87,14 +87,14 @@ function paserDesc(str){
                 if(new_texts.indexOf("Best Sellers Rank") != -1){
                     var rank = $.trim(new_texts.replace("Best Sellers Rank","").split(' in ')[0].replace('#', '').replace(',', ''))
                     rank = parseInt(rank)
-                    console.log("rank是：",rank)
+                    //console.log("rank是：",rank)
                     if(rank >= max_rank){ //设置最大的排名：
                         return "";
                     }
                 }
                 if(new_texts.indexOf("Date First Available") != -1){
                     var add_date_year = $.trim(new_texts.replace("Date First Available",'').split(",")[1])
-                    console.log("上架年份是：",add_date_year)
+                    //console.log("上架年份是：",add_date_year)
                     if(add_date_year_filter.indexOf(add_date_year) == -1){ //设置是否是21年，22年的产品：
                         return "";
                     }
