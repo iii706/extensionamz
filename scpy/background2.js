@@ -35,7 +35,9 @@ let detailRequest = {
     },
     // 归还令牌
     backToken: function(token) {
-        this.state.push(token);
+        if(this.state.indexOf(token) == -1 ){
+            this.state.push(token);
+        }
     },
     getUrl:function(){
         return this.urls.splice(0,1)[0];
@@ -76,7 +78,7 @@ let detailRequest = {
                 //add_log_text(data.image+"---"+data.asin+"--"+data.title.slice(0,20)+"..."+data.price+"---",this.waitqueue.length);
                 if(url_item.asin != undefined && data.desc != undefined && data.desc != ""){
 
-                    post_to_locale(data);
+                    //post_to_locale(data);
                 }
 
                 //post_to_locale(data);
@@ -90,8 +92,8 @@ let detailRequest = {
                 }
                 console.log("token_length:",this.state.length);
                 if (this.state.length == 4){
-                    console.log("需要采集列表页了");
                     if (listRequest.waitqueue.length > 0){
+                        console.log("需要采集列表页了");
                         var wait = listRequest.waitqueue.splice(0, 1);
                         listRequest.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
                         detail_start_flag = true;
@@ -114,7 +116,7 @@ let detailRequest = {
 
 let listRequest = {
     urls:list_urls,
-    state: ['token1'],  // 默认三个令牌 最多可并发发送三次请求
+    state: ['token_list'],  // 默认三个令牌 最多可并发发送三次请求
     queue: [],   // 请求队列
     waitqueue: [],  //  等待队列
     // 获取令牌

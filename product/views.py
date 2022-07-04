@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from lxml import etree
 import re
 from datetime import datetime
-from product.models import Product
+from product.models import Product,Rank
 
 def product_content_post(request):
 
@@ -74,13 +74,16 @@ def product_content_post(request):
     p.product_dimensions = product_dimensions
     p.weight = weight
     p.date_first_available = date_first_available
-    p.rank = rank
+
     p.cat = cat
     p.review_counts = review_counts
     p.ratings = ratings
     if cat != "#NA":
         p.save()
-
+        r = Rank()
+        r.product = p
+        r.rank = rank
+        r.save()
 
     print([asin,title[:50],price,image])
     return HttpResponse({'mes':'1'})
