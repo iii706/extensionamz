@@ -1,6 +1,6 @@
 let detail_start_flag = true;
 let stop_flag = true;
-let page_start = 3;
+let page_start = 1;
 let page_end = 400;
 let min_review_counts = 300;
 let max_rank = 60000;
