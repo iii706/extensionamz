@@ -1,25 +1,25 @@
 //日志输出
-function add_log_text(text){
-
-    let new_time = formatDate(new Date().getTime());
-
-    let oldvalue = $("#loggertextarea")[0].value;
-    if (oldvalue != undefined ){
-        var oldvalue_split = oldvalue.split("\n");
-        if(oldvalue != "" && oldvalue_split.length > 10){
-            var new_value = oldvalue_split.splice(1,oldvalue_split.length).join('\n')+'\n'+ new_time + " " +text;
-            $("#loggertextarea")[0].value = new_value;
-        }else{
-            if (oldvalue == "") {
-                $("#loggertextarea")[0].value = new_time + " " +text;
-            } else{
-                $("#loggertextarea")[0].value = oldvalue+'\n'+ new_time + " " + text;
-            }
-
-        }
-    }
-
-}
+//function add_log_text(text){
+//
+//    let new_time = formatDate(new Date().getTime());
+//
+//    let oldvalue = $("#loggertextarea")[0].value;
+//    if (oldvalue != undefined ){
+//        var oldvalue_split = oldvalue.split("\n");
+//        if(oldvalue != "" && oldvalue_split.length > 10){
+//            var new_value = oldvalue_split.splice(1,oldvalue_split.length).join('\n')+'\n'+ new_time + " " +text;
+//            $("#loggertextarea")[0].value = new_value;
+//        }else{
+//            if (oldvalue == "") {
+//                $("#loggertextarea")[0].value = new_time + " " +text;
+//            } else{
+//                $("#loggertextarea")[0].value = oldvalue+'\n'+ new_time + " " + text;
+//            }
+//
+//        }
+//    }
+//
+//}
 //function post_to_locale(data){
 //        $.ajax({
 //            async : true,

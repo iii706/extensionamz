@@ -1,11 +1,3 @@
-$(document).ready(function(){
-  $("#stop").click(function(){
-    alert("真的停止么？");
-    stop_flag = false;
-    add_log_text("停止采集");
-  });
-
-  $("#start").click(function(){
 
 for (var page = page_start; page <= page_end; page++  ){
     //list_url = "https://www.amazon.com/s?i=garden&bbn=1055398&rh=n%3A1055398%2Cp_36%3A1000-3000%2Cp_n_date_first_available_absolute%3A1249053011&dc&fs=true&page=<page>&qid=1656595349&rnid=1249051011&ref=sr_pg_<pre_page>"
@@ -21,7 +13,6 @@ for (var page = page_start; page <= page_end; page++  ){
 
 
 
-add_log_text("开始执行。。。",list_urls.length);
 
 
 let detailRequest = {
@@ -225,5 +216,3 @@ for (var i = 0; i < list_urls.length; i++){
     listRequest.pushQueue(request_obj);
 }
 listRequest.start();
-  });
-});
