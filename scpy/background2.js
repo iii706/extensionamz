@@ -167,7 +167,7 @@ let listRequest = {
                     for (var j = 0; j < next_page_detail.length; j++){
                             function f1(url) {
                             return new Promise((resolve, reject) => {
-                                resolve(ajax_get(url))
+                                resolve(fetch(url).then(response => response.text()))
                                 })
                             }
                             var request_obj = {
@@ -203,10 +203,12 @@ function ajax_get(url){
 }
 
 
+
 for (var i = 0; i < list_urls.length; i++){
     function f1(url) {
     return new Promise((resolve, reject) => {
-        resolve(ajax_get(url))
+        resolve(fetch(url).then(response => response.text())
+        )
         })
     }
     var request_obj = {
