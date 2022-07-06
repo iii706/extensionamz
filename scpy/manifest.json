@@ -15,8 +15,17 @@
     },
     "background": {
         "persistent": true,
-        "scripts": [ "commons.js", "jquery-3.6.0.min.js", "PaserConf.js", "background2.js" ]
+        "scripts": [ "commons.js", "jquery-3.6.0.min.js", "PaserConf.js", "extension-reload.js","background2.js" ]
         //"page": "background.html"
+    },
+    "commands": {
+        "Ctrl+M": {
+            "suggested_key": {
+                "default": "Ctrl+M",
+                "mac": "Command+M"
+            },
+            "description": "Ctrl+M."
+        }
     },
     "content_scripts": [
         {
@@ -33,6 +42,7 @@
         }
     ],
     "permissions": [
+        "management",
         "contextMenus", // 右键菜单
         "tabs", // 标签
         "notifications", // 通知

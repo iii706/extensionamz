@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from product.models import Product,Rank
+from product.models import Product,Rank,Review,Seller
 
 # Register your models here.
 
@@ -23,6 +23,14 @@ class ProductAdmin(admin.ModelAdmin):
 class RankAdmin(admin.ModelAdmin):
     list_display = ['id','product','rank','add_time']
 
+
+@admin.register(Seller)
+class SellerAdmin(admin.ModelAdmin):
+    list_display = ['id','brand_name','days_30_ratings','days_90_ratings','year_ratings','life_ratings','business_addr','add_time']
+
+@admin.register(Review)
+class ReviewsAdmin(admin.ModelAdmin):
+    list_display = ['id','review_counts','add_time','add_time']
 
 
 

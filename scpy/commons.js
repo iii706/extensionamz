@@ -36,13 +36,16 @@
 //            });
 //}
 
-function post_to_locale(data){
+//product_url:http://127.0.0.1:8000/product/product_post
+//seller_url:http://127.0.0.1:8000/product/seller_post
+
+function post_to_locale(url,data){
      return $.ajax({
              methon : "get",
              async : true,
              dataType : "json",
              data : data,
-             url : "http://127.0.0.1:8000/product/post", //跨域请求的URL
+             url : "http://127.0.0.1:8000/product/product_post", //跨域请求的URL
              success : function(response, status, xhr){
                  xhr = null
              },

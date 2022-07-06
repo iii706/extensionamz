@@ -1,39 +1,36 @@
 let detail_start_flag = true;
 let stop_flag = true;
 let page_start = 1;
-let page_end = 400;
+let page_end = 200;
 let min_review_counts = 300;
 let max_rank = 60000;
 let add_date_year_filter = ['2021','2022']  //合适年份
 let list_url = "";
 let list_urls = [];
 
+let seller_Paser = {
+	'brand_name':['#sellerName-rd'],
+	'days_30_ratings':['#feedback-summary-table > tbody > tr:nth-child(5) > td:nth-child(2) > span'],
+	'days_90_ratings':['#feedback-summary-table > tbody > tr:nth-child(5) > td:nth-child(3) > span'],
+	'year_ratings':['#feedback-summary-table > tbody > tr:nth-child(5) > td:nth-child(4) > span'],
+	'life_ratings':['#feedback-summary-table > tbody > tr:nth-child(5) > td:nth-child(5) > span'],
+	'business_name':['#page-section-detail-seller-info > div > div > div > div:nth-child(2) > span:nth-child(2)'],
+	'business_addr':['div.a-row.a-spacing-none.indent-left']
+    }
 
-
-let Paser = {
+let product_Paser = {
 	'title':['#productTitle'],
 	'image':['#landingImage'],
 	'price':['#corePrice_feature_div > div > span > span.a-offscreen',
 			'#comparison_price_row > td.comparison_baseitem_column > span > span.a-offscreen'
 			],
-	'desc':["#detailBulletsWrapper_feature_div","#productDetails-placement-auto_feature_div","#prodDetails"]
-}
-
-//重复函数
-function map_desc(new_texts_split){
-    var ret = [];
-    var item_value = new_texts_split[1].replace(/\n/gm,"");
-    var item_key = new_texts_split[0].replace(/\n/gm,"");
-    //item_value = item_value.replace("‎","");//这里有个点，
-    item_key = item_key.replace("‎","");//这里有个点，
-    item_value = $.trim(item_value)
-    item_key = $.trim(item_key)
-    ret.push(item_key);
-    ret.push(item_value);
-    return ret;
+	'desc':["#detailBulletsWrapper_feature_div","#productDetails-placement-auto_feature_div","#prodDetails"],
+	'seller_url':['#sellerProfileTriggerId']
 }
 
 
+
+//解析产品详细信息方法
 function paserDesc(str){
     var myRe = /<script[\s\S]*<\/script>/gm;
     str = str.replace(myRe,"");
@@ -117,8 +114,8 @@ function paserDesc(str){
 
 }
 
-
-function extract(jqueryObj,selector,key){
+//解析产品页面
+function product_extract(jqueryObj,selector,key){
 	for (var i = 0; i <= selector.length; i++){
 		if (typeof(selector[i]) != "undefined"){
 			var ret = jqueryObj.find(selector[i]);
@@ -127,14 +124,20 @@ function extract(jqueryObj,selector,key){
 					return 0.0;
 				}
 			}
-
-
 			if (key == "desc"){
 				if (ret.text() != ""){
                     var datas = paserDesc(ret.html())
                     //console.log(datas,ret.html());
 					return datas;
 				}
+			}
+
+			if(key == "seller_url"){
+
+			    var seller_url = ret.attr("href");
+			   if (seller_url != ""){
+			    return seller_url;
+			   }
 			}
 
 			if (typeof(ret) != "undefined"){
@@ -150,4 +153,9 @@ function extract(jqueryObj,selector,key){
 		}
 		}
 	}
+}
+
+
+function seller_extract(jqueryObj,selector,key){
+
 }
