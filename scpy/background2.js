@@ -20,73 +20,6 @@ for (var page = page_start; page <= page_end; page++  ){
 }
 
 
-//卖家页面请求
-let SellerRequest = {
-    state: ['sellertoken1','sellertoken2','sellertoken3','sellertoken4'],  // 默认三个令牌 最多可并发发送三次请求
-    queue: [],   // 请求队列
-    waitqueue: [],  //  等待队列
-    // 获取令牌
-    getToken: function() {
-        return this.state.splice(0, 1)[0];
-    },
-    // 归还令牌
-    backToken: function(token) {
-            this.state.push(token);
-    },
-    getUrl:function(){
-        return this.urls.splice(0,1)[0];
-    },
-    // 请求队列
-    pushQueue: function(request_obj, type = "first") {
-        type == "second" && (this.queue = []); // 每次push新请求的时候  队列清空
-
-        if( this.state.length > 0) {  // 看是否有令牌
-            var token = this.getToken();  // 取令牌
-            request_obj.token = token;
-
-            this.queue.push(request_obj);
-        } else {   // 否则推入等待队列
-            this.waitqueue.push(request_obj)
-        }
-
-    },
-    // 开始执行
-    start: function() {
-        for(let item of this.queue) {
-            if (stop_flag == true){
-               item.request(item.url).then(res => {
-                var jqueryObj = $(res);
-                 var data = {
-                    'seller_id':item.seller_id,
-                    'brand_name':extract(jqueryObj,seller_Paser.brand_name,"brand_name"),
-                    'days_30_ratings':extract(jqueryObj,seller_Paser.days_30_ratings,"days_30_ratings"),
-                    'days_90_ratings':extract(jqueryObj,seller_Paser.days_90_ratings,"days_90_ratings"),
-                    'year_ratings':extract(jqueryObj,seller_Paser.year_ratings,"year_ratings"),
-                    'life_ratings':extract(jqueryObj,seller_Paser.life_ratings,"life_ratings"),
-                    'business_name':extract(jqueryObj,seller_Paser.business_name,"business_name"),
-                    'business_addr':extract(jqueryObj,seller_Paser.business_name,"business_addr")
-                 }
-
-                 console.log("卖家信息：",data);
-
-
-
-
-//                if(item.asin != undefined && data.desc != undefined && data.desc != ""){
-//
-//                    post_to_locale(data);
-//                }
-
-                res = null;
-                this.backToken(item.token); // 令牌归还
-                });
-            } else {
-               console.log("异常：",this.state);
-            }
-        }
-    },
-
-}
 
 
 
@@ -102,9 +35,7 @@ let detailRequest = {
     backToken: function(token) {
             this.state.push(token);
     },
-    getUrl:function(){
-        return this.urls.splice(0,1)[0];
-    },
+
     // 请求队列
     pushQueue: function(request_obj, type = "first") {
         type == "second" && (this.queue = []); // 每次push新请求的时候  队列清空
@@ -124,47 +55,30 @@ let detailRequest = {
         for(let item of this.queue) {
             if (stop_flag == true){
                product_url = 'https://www.amazon.com/dp/'+item.asin
-               //product_url = 'https://www.amazon.com/dp/B09WR46VNL'
-               //console.log("等待请示数量：",item.token,this.waitqueue.length,listRequest.waitqueue.length,product_url);
                item.request(product_url).then(res => {
                 var jqueryObj = $(res);
-//                var data = {
-//                    'title':extract(jqueryObj,Paser.title,"title"),
-//                    'image':extract(jqueryObj,Paser.image,"image"),
-//                    'asin':item.asin,
-//                    'price':extract(jqueryObj,Paser.price,"price"),
-//                    'desc':extract(jqueryObj,Paser.desc,"desc"),
-//                };
                 var data = {
-                    'seller_url':product_extract(jqueryObj,product_Paser.seller_url,"seller_url"),
+                    'title':product_extract(jqueryObj,product_Paser.title,"title"),
+                    'image':product_extract(jqueryObj,product_Paser.image,"image"),
+                    'asin':item.asin,
+                    'price':product_extract(jqueryObj,product_Paser.price,"price"),
+                    'desc':product_extract(jqueryObj,product_Paser.desc,"desc"),
+                };
+
+                var seller_url = product_extract(jqueryObj,product_Paser.seller_url,"seller_url");
+                data['seller_id'] = "";
+                if(seller_url != "" && seller_url != undefined) {
+                    if (seller_url.indexOf("seller=") != -1){
+                        data['seller_id'] = seller_url.split("seller=")[1].split("&")[0]
+                    }
                 }
 
-                let seller_id = "";
-                if (data.seller_url.indexOf("seller=") != -1){
-                    seller_id = data.seller_url.split("seller=")[1].split("&")[0]
-                }
-                console.log("卖家链接是：",seller_id,data.seller_url != "" && data.seller_url != undefined);
-                if(data.seller_url != "" && data.seller_url != undefined && seller_id != ""){
-                    function f1(url) {
-                        return new Promise((resolve, reject) => {
-                            resolve(fetch(url).then(response => response.text())
-                            )
-                            })
-                        }
-                        var request_obj = {
-                            request:f1,
-                            url:"http://www.amazon.com"+data.seller_url,
-                            seller_id:seller_id
-                        }
-                        SellerRequest.pushQueue(request_obj);
-                        SellerRequest.start();
-                }
+                //console.log("卖家链接是：",data);
 
                 //add_log_text(data.image+"---"+data.asin+"--"+data.title.slice(0,20)+"..."+data.price+"---",this.waitqueue.length);
-//                if(item.asin != undefined && data.desc != undefined && data.desc != ""){
-//
-//                    post_to_locale(data);
-//                }
+                if(item.asin != undefined && data.desc != undefined && data.desc != "" && data.seller_id != ""){
+                    post_to_locale(data);
+                }
 
                 //post_to_locale(data);
                 res = null;
@@ -187,9 +101,7 @@ let detailRequest = {
                         listRequest.start(); // 重新开始执行队列
                     }
                 }
-
-
-                }).catch(fetch(item.url).then(response => response.text()).then(text => console.log(text)));
+                }).catch(e => console.log(e));
             } else {
                console.log("异常：",this.state);
             }

@@ -7,34 +7,12 @@ from datetime import datetime
 from product.models import Product,Rank,Review,Seller
 
 
-def seller_content_post(request):
-    brand_name = request.GET("brand_name")
-    seller_id = request.GET("sell_id")
-    days_30_ratings = request.GET("days_30_ratings")
-    days_90_ratings = request.GET("days_90_ratings")
-    year_ratings = request.GET("year_ratings")
-    life_ratings = request.GET("life_ratings")
-    business_name = request.GET("business_name")
-    business_addr = request.GET("business_addr")
-    country = request.GET("country")
-
-    if seller_id != "":
-        seller = Seller()
-        seller.brand_name = brand_name
-        seller.sell_id = seller_id
-        seller.days_30_ratings = days_30_ratings
-        seller.days_90_ratings = days_90_ratings
-        seller.year_ratings = year_ratings
-        seller.life_ratings = life_ratings
-        seller.business_name = business_name
-        seller.business_addr = business_addr
-        seller.country = country
-        seller.save()
-
-
-
-
 def product_content_post(request):
+    seller_id = request.GET["seller_id"]
+    seller, b = Seller.objects.get_or_create(seller_id=seller_id)
+
+
+
     title = request.GET['title']
     image = request.GET['image']
     price = request.GET['price'].replace("$","").replace("US","")
@@ -93,6 +71,7 @@ def product_content_post(request):
     print([product_dimensions, weight, date_first_available, asin, rank,cat, review_counts, ratings])
 
     p = Product()
+    p.seller = seller
     p.title = title
     p.asin = asin
     p.price = price
@@ -105,6 +84,7 @@ def product_content_post(request):
     p.review_counts = review_counts
     p.ratings = ratings
     if cat != "#NA":
+
         p.save()
         r = Rank()
         r.product = p
@@ -113,6 +93,7 @@ def product_content_post(request):
 
         review = Review()
         review.review_counts = review_counts
+        review.product = p
         review.save()
 
     print([asin,title[:50],price,image])

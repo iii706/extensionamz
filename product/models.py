@@ -3,6 +3,7 @@ from django.contrib import admin
 # Create your models here.
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 
 #产品信息表
 class Product(models.Model):
@@ -17,7 +18,9 @@ class Product(models.Model):
     review_counts = models.IntegerField(verbose_name="评论数",)
     ratings = models.FloatField(verbose_name="评分",default='5.0')
     date_first_available = models.DateField(verbose_name="上架日期",default='1990-01-01')
-    add_time = models.DateField(auto_now_add=True,verbose_name="采集时间")
+    display = models.BooleanField(verbose_name="是否展示",default=True)
+    add_time = models.DateTimeField("保存日期",default = timezone.now)
+    mod_time = models.DateTimeField("最后修改日期",auto_now = True)
 
     def __str__(self):
         return self.title[:20]
@@ -27,41 +30,92 @@ class Product(models.Model):
             models.Index(fields=["asin"])
         ]
 
+    def show_add_time(self):
+        return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_add_time.admin_order_field = 'add_time'
+    show_add_time.short_description = '抓取时间'
+
+    def show_mod_time(self):
+        return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_mod_time.admin_order_field = 'add_time'
+    show_mod_time.short_description = '最后修改时间'
+
 
 
 #排名信息表
 class Rank(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
     rank = models.IntegerField(verbose_name="排名")
-    add_time = models.DateField(auto_now_add=True, verbose_name="采集时间")
+    add_time = models.DateTimeField("保存日期", default=timezone.now)
+    mod_time = models.DateTimeField("最后修改日期", auto_now=True)
     class Meta:
         indexes = [
             models.Index(fields=["product"])
         ]
+
+    def show_add_time(self):
+        return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_add_time.admin_order_field = 'add_time'
+    show_add_time.short_description = '抓取时间'
+
+    def show_mod_time(self):
+        return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_mod_time.admin_order_field = 'add_time'
+    show_mod_time.short_description = '最后修改时间'
+
 
 #卖家信息表
 class Seller(models.Model):
     brand_name = models.CharField(verbose_name="品牌名称",max_length=200)
     seller_id = models.CharField(verbose_name="卖家id",max_length=200,unique = True,null=False)
-    days_30_ratings = models.IntegerField(verbose_name="30天fd数")
-    days_90_ratings = models.IntegerField(verbose_name="90天fd数")
-    year_ratings = models.IntegerField(verbose_name="一年fd数")
-    life_ratings = models.IntegerField(verbose_name="总fd数")
-    business_name = models.CharField(verbose_name="公司名称",max_length=300)
-    business_addr = models.CharField(verbose_name="公司地址",max_length=300)
+    product_counts = models.IntegerField(verbose_name="产品数",default=0)
+    days_30_ratings = models.IntegerField(verbose_name="30天fd数",default=0)
+    days_90_ratings = models.IntegerField(verbose_name="90天fd数",default=0)
+    year_ratings = models.IntegerField(verbose_name="一年fd数",default=0)
+    life_ratings = models.IntegerField(verbose_name="总fd数",default=0)
+    business_name = models.CharField(verbose_name="公司名称",max_length=300,default='')
+    business_addr = models.CharField(verbose_name="公司地址",max_length=300,default='')
     country = models.CharField(verbose_name="所在国家",max_length=10,default='')
-    add_time = models.DateField(auto_now_add=True, verbose_name="采集时间")
+    display = models.BooleanField(verbose_name="是否跟踪", default=True)
+    add_time = models.DateTimeField("保存日期", default=timezone.now)
+    mod_time = models.DateTimeField("最后修改日期", auto_now=True)
     class Meta:
         indexes = [
             models.Index(fields=["seller_id"])
         ]
 
+    def show_add_time(self):
+        return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_add_time.admin_order_field = 'add_time'
+    show_add_time.short_description = '抓取时间'
+
+    def show_mod_time(self):
+        return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_mod_time.admin_order_field = 'add_time'
+    show_mod_time.short_description = '最后修改时间'
+
 #评论信息表
 class Review(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
     review_counts = models.IntegerField(verbose_name="评论数",default=0)
-    add_time = models.DateField(auto_now_add=True, verbose_name="采集时间")
+    add_time = models.DateTimeField("保存日期", default=timezone.now)
+    mod_time = models.DateTimeField("最后修改日期", auto_now=True)
     class Meta:
         indexes = [
             models.Index(fields=["product"])
         ]
+    def show_add_time(self):
+        return self.add_time.strftime ('%Y-%m-%d %H:%M:%S')
+    show_add_time.admin_order_field = 'add_time'
+    show_add_time.short_description = '抓取时间'
+
+    def show_mod_time(self):
+        return self.mod_time.strftime ('%Y-%m-%d %H:%M:%S')
+    show_mod_time.admin_order_field = 'add_time'
+    show_mod_time.short_description = '最后修改时间'

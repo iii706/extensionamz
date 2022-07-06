@@ -6,7 +6,7 @@ from product.models import Product,Rank,Review,Seller
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['IMAGE','title','cat','review_counts','date_first_available','ratings','add_time',"show_rank"]
+    list_display = ['IMAGE','title','cat','review_counts','date_first_available','ratings','show_add_time',"show_rank",'show_mod_time']
     list_display_links = ['date_first_available'] #可以直接链接到编辑页面
     list_filter = ['cat']
     search_fields = ["title","asin"]
@@ -21,16 +21,16 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Rank)
 class RankAdmin(admin.ModelAdmin):
-    list_display = ['id','product','rank','add_time']
+    list_display = ['id','product','rank','show_add_time','show_mod_time']
 
 
 @admin.register(Seller)
 class SellerAdmin(admin.ModelAdmin):
-    list_display = ['id','brand_name','days_30_ratings','days_90_ratings','year_ratings','life_ratings','business_addr','add_time']
-
+    list_display = ['id','seller_id','brand_name','product_counts','days_30_ratings','days_90_ratings','year_ratings','life_ratings','country','show_add_time','show_mod_time']
+    list_filter = ['country','display']
 @admin.register(Review)
 class ReviewsAdmin(admin.ModelAdmin):
-    list_display = ['id','review_counts','add_time','add_time']
+    list_display = ['id','product','review_counts','show_add_time','show_mod_time']
 
 
 
