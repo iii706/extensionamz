@@ -4,20 +4,20 @@ from django.http import HttpResponse
 from lxml import etree
 import re
 from datetime import datetime
-from product.models import Product,Rank,Review,SellerBase
-
+from product.models import Product,SellerBase
+from django.utils import timezone
 
 def product_content_post(request):
     seller_id = request.GET["seller_id"]
     seller, b = SellerBase.objects.get_or_create(seller_id=seller_id)
 
-
-
     title = request.GET['title']
     image = request.GET['image']
     price = request.GET['price'].replace("$","").replace("US","")
-
     desc = request.GET['desc']
+    asin = request.GET['asin']
+
+
 
     desc = desc.replace("\u200e",'')
     desc = desc.replace("\u200e",'')
@@ -27,7 +27,6 @@ def product_content_post(request):
     product_dimensions = '#NA'
     weight = '#NA'
     date_first_available = datetime.strptime("January 01, 1990", '%B %d, %Y')
-    asin = '#NA'
     rank = 999999
     cat = '#NA'
     review_counts = 0
@@ -65,36 +64,32 @@ def product_content_post(request):
     if rank == '':
         rank = 999999
 
-    if asin == '':
-        asin = request.GET['asin']
     print(desc)
     print([product_dimensions, weight, date_first_available, asin, rank,cat, review_counts, ratings])
 
-    p = Product()
-    p.seller = seller
-    p.title = title
-    p.asin = asin
-    p.price = price
-    p.image = image
-    p.product_dimensions = product_dimensions
-    p.weight = weight
-    p.date_first_available = date_first_available
+    defaults = {
+        'seller':seller,
+        'title':title,
+        'price':price,
+        'image':image,
+        'product_dimensions':product_dimensions,
+        'weight':weight,
+        'date_first_available':date_first_available,
+        'last_rank':rank,
+        'last_review_count':review_counts,
+        'ratings':ratings,
+        'cat':cat,
 
-    p.cat = cat
-    p.review_counts = review_counts
-    p.ratings = ratings
+    }
     if cat != "#NA":
+        p,b = Product.objects.get_or_create(asin=asin,defaults=defaults)
+        print("查找结果：",p,b)
+        if b == False:
+            day = (timezone.now() - p.mod_time).days
+            print(asin,p.mod_time,day)
+            if day >= 1:
+                p2,b2 = Product.objects.update_or_create(defaults=defaults,asin=asin)
+                print("更新结果：",b2)
 
-        p.save()
-        r = Rank()
-        r.product = p
-        r.rank = rank
-        r.save()
 
-        review = Review()
-        review.review_counts = review_counts
-        review.product = p
-        review.save()
-
-    print([asin,title[:50],price,image])
     return HttpResponse({'mes':'1'})

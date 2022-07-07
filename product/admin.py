@@ -4,10 +4,16 @@ from product.models import Product,Rank,Review,SellerBase,SellerDetail
 
 # Register your models here.
 
+class GuardedAdmin(admin.ModelAdmin):
+    class Media:
+        js = ('js/guarded_admin.js',)
+
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['IMAGE','title','cat','date_first_available','ratings','show_add_time',"show_rank",'show_mod_time']
-    list_display_links = ['date_first_available'] #可以直接链接到编辑页面
+    list_display = ['id','IMAGE','title','cat',"last_rank",'last_review_count','add_date_first_available','show_mod_time']
+    list_display_links = ['id'] #可以直接链接到编辑页面
     list_filter = ['cat']
     search_fields = ["title","asin"]
 
@@ -16,11 +22,10 @@ class ProductAdmin(admin.ModelAdmin):
 
     IMAGE.short_description = "产品详情"
 
-    def show_rank(self,obj): #获取所有的rank
-        return obj.tutorialstats.rank
 
-    show_rank.admin_order_field = 'product_rank'
-    show_rank.short_description = '最新排名'
+
+
+
 
 @admin.register(Rank)
 class RankAdmin(admin.ModelAdmin):
@@ -29,18 +34,10 @@ class RankAdmin(admin.ModelAdmin):
 
 @admin.register(SellerBase)
 class SellerBaseAdmin(admin.ModelAdmin):
-    list_display = ['id','seller_id','brand_name','country','show_add_time','show_mod_time','days_30_ratings']
+    list_display = ['id','seller_id','brand_name','country','last_product_counts','last_days_30_ratings','last_days_90_ratings','last_year_ratings','last_life_ratings','show_add_time','show_mod_time']
     list_filter = ['country','display']
 
-    def days_30_ratings(self,obj):
-        ret = obj.sellerdetail_set.all().order_by("mod_time")
-        if len(ret)>0:
-            return ret[0].days_30_ratings
-        else:
-            return 0
 
-    days_30_ratings.admin_order_field = 'sellerdetail'
-    days_30_ratings.short_description = '30天fd数'
 
 
 @admin.register(Review)

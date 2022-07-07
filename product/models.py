@@ -16,8 +16,8 @@ class Product(models.Model):
     weight = models.CharField(verbose_name="重量",max_length=50,default='')
     asin = models.CharField(verbose_name="ASIN",max_length=10,default='',unique = True,null=False) #'https://www.amazon/dp/asin'
     price = models.FloatField(verbose_name="价格")
-    last_rank = models.IntegerField(verbose_name="最新排名")
-    last_review_count = models.IntegerField(verbose_name="最新评论数")
+    last_rank = models.IntegerField(verbose_name="最新排名",default=999999)
+    last_review_count = models.IntegerField(verbose_name="最新评论数",default=0)
     cat = models.CharField(verbose_name="类目", max_length=100, default='')
     ratings = models.FloatField(verbose_name="评分",default='5.0')
     date_first_available = models.DateField(verbose_name="上架日期",default='1990-01-01')
@@ -25,8 +25,13 @@ class Product(models.Model):
     add_time = models.DateTimeField("保存日期",default = timezone.now)
     mod_time = models.DateTimeField("最后修改日期",auto_now = True)
 
+    def add_date_first_available(self):
+        return self.date_first_available.strftime('%Y-%m-%d')
+    add_date_first_available.admin_order_field = "date_first_available"
+    add_date_first_available.short_description = "上架日期"
+
     def __str__(self):
-        return self.title[:20]
+        return self.asin +'|'+self.title[:20]
 
     class Meta:
         indexes = [
@@ -45,10 +50,17 @@ class Product(models.Model):
     show_mod_time.admin_order_field = 'add_time'
     show_mod_time.short_description = '最后修改时间'
 
-    def save(self):
-        super(Rank, self).save()
-        self.number_of_orders = Rank.objects.all().order_by('mod_time')[0]
-        self.customer.save()
+    def save(self, *args, **kwargs):
+        super(Product, self).save(*args, **kwargs)
+        r = Rank()
+        r.product = self
+        r.rank = self.last_rank
+        r.save()
+
+        review = Review()
+        review.review_counts = self.last_review_count
+        review.product = self
+        review.save()
 
 #排名信息表
 class Rank(models.Model):
@@ -76,10 +88,30 @@ class Rank(models.Model):
 
 #卖家信息表
 class SellerBase(models.Model):
+    def save(self,*args, **kwargs):
+        super(SellerBase,self).save(*args, **kwargs)
+        seller_detail = SellerDetail()
+        seller_detail.seller_base = self
+        seller_detail.days_30_ratings = self.last_days_30_ratings
+        seller_detail.days_90_ratings = self.last_days_90_ratings
+        seller_detail.year_ratings = self.last_year_ratings
+        seller_detail.life_ratings = self.last_life_ratings
+        seller_detail.product_counts = self.last_product_counts
+        seller_detail.save()
+
+    def __str__(self):
+        return self.seller_id
+
+
     brand_name = models.CharField(verbose_name="品牌名称",max_length=200)
     seller_id = models.CharField(verbose_name="卖家id",max_length=200,unique = True,null=False)
     business_name = models.CharField(verbose_name="公司名称",max_length=300,default='')
     business_addr = models.CharField(verbose_name="公司地址",max_length=300,default='')
+    last_product_counts = models.IntegerField(verbose_name="产品数", default=0)
+    last_days_30_ratings = models.IntegerField(verbose_name="30天fd数", default=0)
+    last_days_90_ratings = models.IntegerField(verbose_name="90天fd数", default=0)
+    last_year_ratings = models.IntegerField(verbose_name="一年fd数", default=0)
+    last_life_ratings = models.IntegerField(verbose_name="总fd数", default=0)
     country = models.CharField(verbose_name="所在国家",max_length=10,default='')
     display = models.BooleanField(verbose_name="是否跟踪", default=True)
     add_time = models.DateTimeField("保存日期", default=timezone.now)
@@ -101,7 +133,7 @@ class SellerBase(models.Model):
     show_mod_time.admin_order_field = 'add_time'
     show_mod_time.short_description = '最后修改时间'
 
-
+#卖家详细信息表
 class SellerDetail(models.Model):
     seller_base = models.ForeignKey('SellerBase', on_delete=models.CASCADE)
     product_counts = models.IntegerField(verbose_name="产品数", default=0)
