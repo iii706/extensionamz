@@ -10,11 +10,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "AmazonProductsScout.settings")
 import django
 django.setup()
 
-from product.models import Seller
+from product.models import SellerBase
 from django.utils import timezone
 #print(datetime.now().strftime ('%Y-%m-%d %H:%M:%S'))
 
-sellers = Seller.objects.all().order_by("mod_time")
+sellers = SellerBase.objects.all().order_by("mod_time")
 for seller in sellers:
     seller_id = seller.seller_id
     print(seller_id)

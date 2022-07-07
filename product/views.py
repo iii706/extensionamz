@@ -4,12 +4,12 @@ from django.http import HttpResponse
 from lxml import etree
 import re
 from datetime import datetime
-from product.models import Product,Rank,Review,Seller
+from product.models import Product,Rank,Review,SellerBase
 
 
 def product_content_post(request):
     seller_id = request.GET["seller_id"]
-    seller, b = Seller.objects.get_or_create(seller_id=seller_id)
+    seller, b = SellerBase.objects.get_or_create(seller_id=seller_id)
 
 
 
