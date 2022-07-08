@@ -5,6 +5,62 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 
+#关键词信息表
+class Word(models.Model):
+     word_content = models.CharField(verbose_name="关键词",max_length=200)
+     search_month_vol = models.IntegerField(verbose_name="月搜索量",default=0)
+     search_3m_vol = models.IntegerField(verbose_name="3月搜索量",default=0)
+     search_12m_vol = models.IntegerField(verbose_name="年均搜索量",default=0)
+     search_rank = models.IntegerField(verbose_name="词排名",default=9999999)
+     product = models.ManyToManyField('Product',through='WordShip') #关联产品,through自定义中间表
+     add_time = models.DateTimeField("保存日期", default=timezone.now)
+     mod_time = models.DateTimeField("最后修改日期", auto_now=True)
+
+     class Meta:
+         indexes = [
+             models.Index(fields=["word_content", "search_rank"])
+         ]
+         verbose_name = "关键词"
+         verbose_name_plural = verbose_name #admin不显示s复数
+
+     def show_add_time(self):
+         return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
+
+     show_add_time.admin_order_field = 'add_time'
+     show_add_time.short_description = '抓取时间'
+
+     def show_mod_time(self):
+         return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
+
+     show_mod_time.admin_order_field = 'add_time'
+     show_mod_time.short_description = '最后修改时间'
+
+#搜索词跟产品之间的关联表
+class WordShip(models.Model):
+    word = models.ForeignKey("Product", on_delete=models.CASCADE)
+    product = models.ForeignKey("Word", on_delete=models.CASCADE)
+    search_persent = models.FloatField(verbose_name="搜索占比")
+    add_time = models.DateTimeField("保存日期", default=timezone.now)
+    mod_time = models.DateTimeField("最后修改日期", auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["word","product"])
+        ]
+        verbose_name = "关键词关联数据"
+        verbose_name_plural = verbose_name  # admin不显示s复数
+
+    def show_add_time(self):
+        return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_add_time.admin_order_field = 'add_time'
+    show_add_time.short_description = '抓取时间'
+
+    def show_mod_time(self):
+        return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    show_mod_time.admin_order_field = 'add_time'
+    show_mod_time.short_description = '最后修改时间'
 
 
 #产品信息表
@@ -37,6 +93,8 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=["asin"])
         ]
+        verbose_name = "产品基础数据"
+        verbose_name_plural = verbose_name  # admin不显示s复数
 
     def show_add_time(self):
         return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -72,6 +130,9 @@ class Rank(models.Model):
         indexes = [
             models.Index(fields=["product"])
         ]
+
+        verbose_name = "产品排名数据"
+        verbose_name_plural = verbose_name  # admin不显示s复数
 
     def show_add_time(self):
         return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -120,6 +181,8 @@ class SellerBase(models.Model):
         indexes = [
             models.Index(fields=["seller_id"])
         ]
+        verbose_name = "卖家基础信息"
+        verbose_name_plural = verbose_name  # admin不显示s复数
 
     def show_add_time(self):
         return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -148,6 +211,8 @@ class SellerDetail(models.Model):
         indexes = [
             models.Index(fields=["seller_base"])
         ]
+        verbose_name = "卖家历史数据"
+        verbose_name_plural = verbose_name  # admin不显示s复数
 
     def show_add_time(self):
         return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -172,6 +237,9 @@ class Review(models.Model):
         indexes = [
             models.Index(fields=["product"])
         ]
+        verbose_name = "产品评论数据"
+        verbose_name_plural = verbose_name  # admin不显示s复数
+
     def show_add_time(self):
         return self.add_time.strftime ('%Y-%m-%d %H:%M:%S')
     show_add_time.admin_order_field = 'add_time'

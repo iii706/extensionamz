@@ -2,8 +2,15 @@ from django.contrib import admin
 from django.utils.html import format_html
 from product.models import Product,Rank,Review,SellerBase,SellerDetail
 
-# Register your models here.
+from django.contrib import admin
 
+admin.site.site_title="亚马逊产品数据"
+admin.site.site_header="亚马逊产品数据管理"
+admin.site.index_title="欢迎登陆，选择以下信息进入："
+
+
+# Register your models here.
+##修改后台某列列宽
 class GuardedAdmin(admin.ModelAdmin):
     class Media:
         js = ('js/guarded_admin.js',)
