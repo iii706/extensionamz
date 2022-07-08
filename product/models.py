@@ -12,6 +12,8 @@ class Word(models.Model):
      search_3m_vol = models.IntegerField(verbose_name="3月搜索量",default=0)
      search_12m_vol = models.IntegerField(verbose_name="年均搜索量",default=0)
      search_rank = models.IntegerField(verbose_name="词排名",default=9999999)
+     search_product_results = models.IntegerField(verbose_name="搜索产品总数",default=0)
+     search_products_review_counts = models.IntegerField(verbose_name="搜索产品总评论数",default=0)
      product = models.ManyToManyField('Product',through='WordShip') #关联产品,through自定义中间表
      add_time = models.DateTimeField("保存日期", default=timezone.now)
      mod_time = models.DateTimeField("最后修改日期", auto_now=True)

@@ -73,7 +73,7 @@ let detailRequest = {
                     }
                 }
 
-                //console.log("卖家链接是：",data);
+                console.log("卖家链接是：",data,item.asin != undefined && data.desc != undefined && data.desc != "" && data.seller_id != "");
 
                 //add_log_text(data.image+"---"+data.asin+"--"+data.title.slice(0,20)+"..."+data.price+"---",this.waitqueue.length);
                 if(item.asin != undefined && data.desc != undefined && data.desc != "" && data.seller_id != ""){

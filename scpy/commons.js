@@ -42,7 +42,7 @@
 function post_to_locale(data){
      return $.ajax({
              methon : "get",
-             //async : true,
+             async : true,
              dataType : "json",
              data : data,
              url : "http://127.0.0.1:8000/product/post/", //跨域请求的URL
