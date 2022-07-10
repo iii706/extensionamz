@@ -4,8 +4,68 @@ from django.http import HttpResponse
 from lxml import etree
 import re
 from datetime import datetime
-from product.models import Product,SellerBase
+from product.models import Product,SellerBase,Url
 from django.utils import timezone
+import redis
+from django.conf import settings
+import json
+
+def get_start_url(requet):
+    url = Url.objects.all().order_by("mod_time")[0]
+    print(url.start_url)
+    return HttpResponse(json.dumps({"url":url.start_url}))
+
+
+
+
+#获取一条待爬取list链接
+def get_url(request):
+    url_type = request.GET["url_type"]
+    if url_type == "list":
+        url = settings.REDIS_CONN.srandmember(settings.LIST_URL_QUEUE)
+    elif url_type == 'asin':
+        url = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE)
+    if url:
+        return HttpResponse(json.dumps({"url":url.decode()}))
+    else:
+        return HttpResponse(json.dumps({"url": ""}))
+#删除一条待爬取list链接
+def del_url(request):
+    url_type = request.GET["url_type"]
+    urls_str = request.GET['urls']
+    print(urls_str)
+    if urls_str == '':
+        return HttpResponse(json.dumps({"msg":"0"}))
+    else:
+        if url_type == "list":
+            key_str = settings.LIST_URL_QUEUE
+        elif url_type == 'asin':
+            key_str = settings.DETAIL_URL_QUEUE
+            urls_str = 'https://www.amazon.com/dp/'+urls_str
+        settings.REDIS_CONN.srem(key_str,urls_str)
+        return HttpResponse(json.dumps({"msg": "1"}))
+
+##增加链接
+def add_url(request):
+    url_type = request.GET["url_type"]
+    urls_str = request.GET['urls']
+    #print(request,urls_str)
+    if urls_str == '':
+        return HttpResponse(json.dumps({"msg":"0"}))
+    else:
+        if url_type == "list":
+            key_str = settings.LIST_URL_QUEUE
+            urls_split = urls_str.split("|")
+        elif url_type == 'asin':
+            key_str = settings.DETAIL_URL_QUEUE
+            urls_split = ['https://www.amazon.com/dp/'+i for i in urls_str.split("|")]
+        pipe = settings.REDIS_CONN.pipeline()
+        for url in urls_split:
+            pipe.sadd(key_str,url)
+        pipe.execute()
+        return HttpResponse(json.dumps({"msg":"1"}))
+
+
 
 def product_content_post(request):
     seller_id = request.GET["seller_id"]

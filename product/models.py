@@ -4,6 +4,44 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils import timezone
+from redisbloom.client import Client
+import redis    # 导入redis 模块
+from django.conf import settings
+
+
+
+#初始Url链接
+class Url(models.Model):
+    start_url = models.CharField(verbose_name="初始链接地址",max_length=300)
+    start_page = models.IntegerField(verbose_name="开始页数",default=1)
+    end_page = models.IntegerField(verbose_name="结束页数",default=200)
+    page_replace_pattern = models.CharField(verbose_name="上一页替换字符",max_length=10,default="<page>")
+    pre_page_replace_pattern = models.CharField(verbose_name="上一页替换字符",max_length=20,default="<pre_page>")
+    add_time = models.DateTimeField("保存日期", default=timezone.now)
+    mod_time = models.DateTimeField("最后修改日期", auto_now=True)
+    def show_add_time(self):
+        return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
+    show_add_time.admin_order_field = 'add_time'
+    show_add_time.short_description = '抓取时间'
+
+    def show_mod_time(self):
+        return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
+    show_mod_time.admin_order_field = 'add_time'
+    show_mod_time.short_description = '最后修改时间'
+
+
+    def save(self, *args, **kwargs):
+        super(Url, self).save(*args, **kwargs)
+        pipe = settings.REDIS_CONN.pipeline()
+        for page in range(self.start_page,self.end_page):
+            url = self.start_url.replace(self.page_replace_pattern,str(page)).replace(self.pre_page_replace_pattern,str(page-1))
+            pipe.sadd(settings.LIST_URL_QUEUE,url)
+        pipe.execute()
+
+    class Meta:
+        verbose_name = "抓取链接信息"
+        verbose_name_plural = verbose_name  # admin不显示s复数
+
 
 #关键词信息表
 class Word(models.Model):
@@ -44,7 +82,6 @@ class WordShip(models.Model):
     search_persent = models.FloatField(verbose_name="搜索占比")
     add_time = models.DateTimeField("保存日期", default=timezone.now)
     mod_time = models.DateTimeField("最后修改日期", auto_now=True)
-
     class Meta:
         indexes = [
             models.Index(fields=["word","product"])
