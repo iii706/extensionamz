@@ -5,7 +5,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from redisbloom.client import Client
-import redis    # 导入redis 模块
 from django.conf import settings
 
 

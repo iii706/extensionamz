@@ -8,5 +8,4 @@ urlpatterns = [
     path('add_url/',views.add_url,name='add_url'),
     path('del_url/',views.del_url,name='del_url'),
     path('get_start_url/',views.get_start_url,name='get_start_url'),
-
 ]

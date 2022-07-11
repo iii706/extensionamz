@@ -10,10 +10,16 @@ import redis
 from django.conf import settings
 import json
 
-def get_start_url(requet):
-    url = Url.objects.all().order_by("mod_time")[0]
-    print(url.start_url)
-    return HttpResponse(json.dumps({"url":url.start_url}))
+def get_start_url(request):
+    url = Url.objects.all().order_by("mod_time")
+    if len(url) > 0:
+        start_url = url[0].start_url
+        start_page = url[0].start_page
+        end_page = url[0].end_page
+        return HttpResponse(json.dumps({"msg":1,"start_url": start_url,'start_page':start_page,'end_page':end_page}))
+    else:
+        return HttpResponse(json.dumps({"msg":0}))
+
 
 
 
@@ -41,14 +47,15 @@ def del_url(request):
             key_str = settings.LIST_URL_QUEUE
         elif url_type == 'asin':
             key_str = settings.DETAIL_URL_QUEUE
-            urls_str = 'https://www.amazon.com/dp/'+urls_str
+            urls_str = urls_str
         settings.REDIS_CONN.srem(key_str,urls_str)
         return HttpResponse(json.dumps({"msg": "1"}))
 
 ##增加链接
 def add_url(request):
-    url_type = request.GET["url_type"]
-    urls_str = request.GET['urls']
+    data = json.loads(request.body.decode("utf-8"))
+    url_type = data['url_type']
+    urls_str = data['urls']
     #print(request,urls_str)
     if urls_str == '':
         return HttpResponse(json.dumps({"msg":"0"}))
@@ -58,7 +65,7 @@ def add_url(request):
             urls_split = urls_str.split("|")
         elif url_type == 'asin':
             key_str = settings.DETAIL_URL_QUEUE
-            urls_split = ['https://www.amazon.com/dp/'+i for i in urls_str.split("|")]
+            urls_split = [i for i in urls_str.split("|")]
         pipe = settings.REDIS_CONN.pipeline()
         for url in urls_split:
             pipe.sadd(key_str,url)
