@@ -29,13 +29,13 @@ class Url(models.Model):
     show_mod_time.short_description = '最后修改时间'
 
 
-    def save(self, *args, **kwargs):
-        super(Url, self).save(*args, **kwargs)
-        pipe = settings.REDIS_CONN.pipeline()
-        for page in range(self.start_page,self.end_page):
-            url = self.start_url.replace(self.page_replace_pattern,str(page)).replace(self.pre_page_replace_pattern,str(page-1))
-            pipe.sadd(settings.LIST_URL_QUEUE,url)
-        pipe.execute()
+    # def save(self, *args, **kwargs):
+    #     super(Url, self).save(*args, **kwargs)
+    #     pipe = settings.REDIS_CONN.pipeline()
+    #     for page in range(self.start_page,self.end_page):
+    #         url = self.start_url.replace(self.page_replace_pattern,str(page)).replace(self.pre_page_replace_pattern,str(page-1))
+    #         pipe.sadd(settings.LIST_URL_QUEUE,url)
+    #     pipe.execute()
 
     class Meta:
         verbose_name = "抓取链接信息"

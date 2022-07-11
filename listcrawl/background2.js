@@ -1,4 +1,5 @@
-var start_url = "http://127.0.0.1:8000/product/get_start_url/"
+var count = '8'
+var start_url = "http://127.0.0.1:8000/product/get_start_url/?count="+count
 var add_url = "http://127.0.0.1:8000/product/add_url/"
 
 let listRequest = {
@@ -46,7 +47,7 @@ let listRequest = {
                                 'price':price,
                                 'review_counts':review_counts,
                             }
-                            console.log("review_counts结果 ：",parseInt(review_counts) < min_review_counts,parseInt(review_counts),min_review_counts);
+                            //console.log("review_counts结果 ：",parseInt(review_counts) < min_review_counts,parseInt(review_counts),min_review_counts);
                             if(parseInt(review_counts) < min_review_counts){ //review数设置
                                  asins.push(asin);
                             }
@@ -67,6 +68,9 @@ let listRequest = {
                                 body: JSON.stringify({//post请求参数
                                     url_type:'asin',
                                     urls: asins.join("|"),
+                                    current_url: item.url,
+                                    url_id:item.url_id,
+                                    current_page:item.current_page
                                 })
                         }
                         fetch(add_url,options).then(
@@ -75,10 +79,15 @@ let listRequest = {
                             res=>console.log(res)
                         );
                     }
-
-
                     this.backToken(item.token); // 令牌归还
-
+                    if(this.waitqueue.length > 0){
+                        var wait = this.waitqueue.splice(0, 1)[0];
+                        this.pushQueue(wait, "second"); // 从等待队列进去的话 就是第二中的push情况了
+                        this.start(); // 重新开始执行队列
+                    }
+                    if(this.state.length == 1){
+                        chrome.runtime.reload();
+                    }
                 });
 
         }
@@ -91,19 +100,21 @@ let listRequest = {
 function callback(res){
     msg = res.msg;
     if (msg == 1){
-        console.log(res.start_url,res.start_page,res.end_page)
 
-        for (var page = res.start_page; page <= res.end_page; page++  ){
+        urls = res.urls;
+        console.log(urls)
+        for (var i = 0; i < urls.length ; i++  ){
             function f1(url) {
             return new Promise((resolve, reject) => {
                     resolve(fetch(url).then(response => response.text())
                     )
                 })
             }
-
             var request_obj = {
                 request:f1,
-                url:res.start_url.replace("<page>",page.toString()).replace("<pre_page>",(+page-1).toString()),
+                url:urls[i],
+                url_id:res.url_id,
+                current_page:res.current_page
             }
             listRequest.pushQueue(request_obj);
         }

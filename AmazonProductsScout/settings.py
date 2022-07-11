@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import os
 import redis
+from redisbloom.client import Client
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -143,9 +145,13 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240 # higher than the count of fields
 
 LIST_URL_QUEUE = "list_wait_queue"
 DETAIL_URL_QUEUE = "detail_wait_queue"
+LIST_URL_FILTER = 'list_url_filter'
+DETSIL_URL_FILTER = 'detail_url_filter' #asin页面filter
+
 REDIS_IP = '106.54.94.94'
 REDIS_PORT = 6379
 REDIS_PWD = 'foobared123'
 
 REDIS_POOL = redis.ConnectionPool(host=REDIS_IP, port=REDIS_PORT,password=REDIS_PWD,db=0)
 REDIS_CONN = redis.Redis(connection_pool= REDIS_POOL)
+REDIS_BL = Client(host=REDIS_IP, port=REDIS_PORT,password=REDIS_PWD)

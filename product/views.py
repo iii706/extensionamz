@@ -11,17 +11,27 @@ from django.conf import settings
 import json
 
 def get_start_url(request):
+    count = request.GET['count']
     url = Url.objects.all().order_by("mod_time")
+    ret_urls = []
     if len(url) > 0:
         start_url = url[0].start_url
+        url_id = url[0].id
+        print(start_url)
         start_page = url[0].start_page
         end_page = url[0].end_page
-        return HttpResponse(json.dumps({"msg":1,"start_url": start_url,'start_page':start_page,'end_page':end_page}))
+        current_page = start_page
+        for page in range(start_page,end_page):
+            ret_url = start_url.replace('<page>',str(page)).replace("<pre_page>",str(page-1))
+            if settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url) != 1:
+                ret_urls.append(ret_url)
+            if len(ret_urls) >= int(count):
+                current_page = page
+                break
+        print(ret_urls)
+        return HttpResponse(json.dumps({"msg":1,"urls": ret_urls,"url_id":url_id,'current_page':current_page}))
     else:
         return HttpResponse(json.dumps({"msg":0}))
-
-
-
 
 
 #获取一条待爬取list链接
@@ -56,10 +66,11 @@ def add_url(request):
     data = json.loads(request.body.decode("utf-8"))
     url_type = data['url_type']
     urls_str = data['urls']
-    #print(request,urls_str)
-    if urls_str == '':
-        return HttpResponse(json.dumps({"msg":"0"}))
-    else:
+    current_url = data['current_url']
+    url_id = data['url_id']
+    current_page = data['current_page']
+    print(request,urls_str,current_url)
+    if urls_str != '':
         if url_type == "list":
             key_str = settings.LIST_URL_QUEUE
             urls_split = urls_str.split("|")
@@ -70,7 +81,12 @@ def add_url(request):
         for url in urls_split:
             pipe.sadd(key_str,url)
         pipe.execute()
-        return HttpResponse(json.dumps({"msg":"1"}))
+    settings.REDIS_BL.cfAddNX(settings.LIST_URL_FILTER,current_url)
+    if url_id != "" and current_page != '':
+        r = Url.objects.get(id=url_id)
+        r.start_page = current_page
+        r.save()
+    return HttpResponse(json.dumps({"msg":"1"}))
 
 
 
