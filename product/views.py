@@ -10,41 +10,47 @@ import redis
 from django.conf import settings
 import json
 
-def get_start_url(request):
+def get_list_url(request):
     count = request.GET['count']
     url = Url.objects.all().order_by("mod_time")
     ret_urls = []
     if len(url) > 0:
         start_url = url[0].start_url
         url_id = url[0].id
-        print(start_url)
         start_page = url[0].start_page
         end_page = url[0].end_page
         current_page = start_page
         for page in range(start_page,end_page):
             ret_url = start_url.replace('<page>',str(page)).replace("<pre_page>",str(page-1))
+            print(page,end_page,settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url),ret_url)
             if settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url) != 1:
                 ret_urls.append(ret_url)
             if len(ret_urls) >= int(count):
                 current_page = page
                 break
         print(ret_urls)
+        if len(ret_urls) == 0: ##已经抓取完了，看需不需要重新抓取？
+            url[0].start_page = 1
+            url[0].save()
+
         return HttpResponse(json.dumps({"msg":1,"urls": ret_urls,"url_id":url_id,'current_page':current_page}))
     else:
         return HttpResponse(json.dumps({"msg":0}))
 
 
 #获取一条待爬取list链接
-def get_url(request):
-    url_type = request.GET["url_type"]
-    if url_type == "list":
-        url = settings.REDIS_CONN.srandmember(settings.LIST_URL_QUEUE)
-    elif url_type == 'asin':
-        url = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE)
-    if url:
-        return HttpResponse(json.dumps({"url":url.decode()}))
+def get_asin_url(request):
+    count = request.GET["count"]
+    asins = []
+    for i in range(int(count)):
+        asin = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE)
+        if asin and settings.REDIS_BL.cfExists(settings.DETSIL_URL_FILTER, asin) != 1:
+            asins.append(asin.decode())
+    if len(asins) > 0:
+        return HttpResponse(json.dumps({"msg":1,"asins":asins}))
     else:
-        return HttpResponse(json.dumps({"url": ""}))
+        return HttpResponse(json.dumps({"msg":0,"asins": ""}))
+
 #删除一条待爬取list链接
 def del_url(request):
     url_type = request.GET["url_type"]
@@ -62,26 +68,20 @@ def del_url(request):
         return HttpResponse(json.dumps({"msg": "1"}))
 
 ##增加链接
-def add_url(request):
+def add_asin_url(request):
     data = json.loads(request.body.decode("utf-8"))
-    url_type = data['url_type']
-    urls_str = data['urls']
+    asins = data['asins']
     current_url = data['current_url']
     url_id = data['url_id']
     current_page = data['current_page']
-    print(request,urls_str,current_url)
-    if urls_str != '':
-        if url_type == "list":
-            key_str = settings.LIST_URL_QUEUE
-            urls_split = urls_str.split("|")
-        elif url_type == 'asin':
-            key_str = settings.DETAIL_URL_QUEUE
-            urls_split = [i for i in urls_str.split("|")]
+    print(request,asins,current_url)
+    if asins != '':
+        asin_arr = [asin for asin in asins.split("|")]
         pipe = settings.REDIS_CONN.pipeline()
-        for url in urls_split:
-            pipe.sadd(key_str,url)
+        for asin in asin_arr:
+            pipe.sadd(settings.DETAIL_URL_QUEUE,asin)
         pipe.execute()
-    settings.REDIS_BL.cfAddNX(settings.LIST_URL_FILTER,current_url)
+        settings.REDIS_BL.cfAddNX(settings.LIST_URL_FILTER,current_url)
     if url_id != "" and current_page != '':
         r = Url.objects.get(id=url_id)
         r.start_page = current_page

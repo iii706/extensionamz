@@ -1,6 +1,6 @@
 var count = '8'
-var start_url = "http://127.0.0.1:8000/product/get_start_url/?count="+count
-var add_url = "http://127.0.0.1:8000/product/add_url/"
+var start_url = "http://127.0.0.1:8000/product/get_list_url/?count="+count
+var add_url = "http://127.0.0.1:8000/product/add_asin_url/"
 
 let listRequest = {
     state: ['token_list'],  // 默认三个令牌 最多可并发发送三次请求
@@ -66,8 +66,7 @@ let listRequest = {
                                 'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({//post请求参数
-                                    url_type:'asin',
-                                    urls: asins.join("|"),
+                                    asins: asins.join("|"),
                                     current_url: item.url,
                                     url_id:item.url_id,
                                     current_page:item.current_page

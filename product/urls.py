@@ -4,8 +4,8 @@ from . import views
 app_name = 'product' #模板中用： product:detail
 urlpatterns = [
     path('post/',views.product_content_post,name='detail'),
-    path('get_url/',views.get_url,name='get_url'),
-    path('add_url/',views.add_url,name='add_url'),
+    path('get_asin_url/',views.get_asin_url,name='get_asin_url'),
+    path('add_asin_url/',views.add_asin_url,name='add_asin_url'),
     path('del_url/',views.del_url,name='del_url'),
-    path('get_start_url/',views.get_start_url,name='get_start_url'),
+    path('get_list_url/',views.get_list_url,name='get_list_url'),
 ]
