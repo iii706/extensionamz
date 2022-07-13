@@ -43,10 +43,15 @@ def get_list_url(request):
 def get_asin_url(request):
     count = request.GET["count"]
     asins = []
-    for i in range(int(count)):
-        asin = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE)
+
+    asins_ret = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE,number=20)
+    for asin in asins_ret:
         if asin and settings.REDIS_BL.cfExists(settings.DETSIL_URL_FILTER, asin) != 1:
             asins.append(asin.decode())
+        else:
+            settings.REDIS_CONN.srem(settings.DETAIL_URL_QUEUE, asin)
+        if len(asins) == int(count):
+            break
     if len(asins) > 0:
         return HttpResponse(json.dumps({"msg":1,"asins":asins}))
     else:
