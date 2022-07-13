@@ -2,10 +2,12 @@ import cloudscraper
 from datetime import datetime
 from lxml import etree
 import os,sys
+import time
 pwd = os.path.dirname(os.path.realpath(__file__))
 # 获取项目名的目录(因为我的当前文件是在项目名下的文件夹下的文件.所以是../)
 sys.path.append(pwd+"../")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "AmazonProductsScout.settings")
+
 
 import django
 django.setup()
@@ -13,6 +15,29 @@ django.setup()
 from product.models import SellerBase,SellerDetail
 from django.utils import timezone
 #print(datetime.now().strftime ('%Y-%m-%d %H:%M:%S'))
+
+def get_page_content(seller_id):
+    while True:
+        try:
+            scraper = cloudscraper.create_scraper(
+                browser={
+                    'browser': 'chrome',
+                    'platform': 'linux',
+                    'desktop': True,
+
+                }
+            )
+
+            # scraper = cloudscraper.create_scraper()
+            page = scraper.get('https://www.amazon.com/sp?ie=UTF8&seller=%s&isAmazonFulfilled=1' % seller_id, timeout=5)
+            print(page.status_code)
+            if page.status_code == 200:
+                return page
+        except Exception as e:
+            print(e)
+            time.sleep(5)
+            continue
+
 
 sellerbases = SellerBase.objects.all().order_by("mod_time")
 counts = len(sellerbases)
@@ -23,33 +48,7 @@ for sellerbase in sellerbases:
     seller_id = sellerbase.seller_id
     print(seller_id,index,counts)
     if add_mod_day == 0 or crawl_day >= 7:
-        try:
-            scraper = cloudscraper.create_scraper(
-                browser={
-                    'browser': 'chrome',
-                    'platform': 'linux',
-                    'desktop': True,
-
-                }
-            )
-            start = datetime.now()
-            #scraper = cloudscraper.create_scraper()
-            page = scraper.get('https://www.amazon.com/sp?ie=UTF8&seller=%s&isAmazonFulfilled=1'%seller_id,timeout=5)
-        except Exception as e:
-            print(e)
-            scraper = cloudscraper.create_scraper(
-                browser={
-                    'browser': 'chrome',
-                    'platform': 'linux',
-                    'desktop': True,
-
-                }
-            )
-            start = datetime.now()
-            # scraper = cloudscraper.create_scraper()
-            page = scraper.get('https://www.amazon.com/sp?ie=UTF8&seller=%s&isAmazonFulfilled=1' % seller_id,timeout=20)
-        print(page.status_code)
-
+        page = get_page_content(seller_id)
         selector = etree.HTML(page.text)
         title = selector.xpath("//title/text()")
         sellerbase.brand_name = ''.join(selector.xpath('//*[@id="sellerName-rd"]/text()'))
@@ -65,10 +64,6 @@ for sellerbase in sellerbases:
         #seller.add_time =
         print(sellerbase.brand_name,ratings_infos,sellerbase.business_name,sellerbase.business_addr)
         sellerbase.save()
-
-
-        end = datetime.now()
-        print('用时：',end-start,title)
     else:
         print("上次抓取时间没有超过7天，不用更新",seller_id,sellerbase.mod_time)
 

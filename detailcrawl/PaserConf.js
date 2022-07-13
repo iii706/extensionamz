@@ -24,7 +24,7 @@ let product_Paser = {
 	'price':['#corePrice_feature_div > div > span > span.a-offscreen',
 			'#comparison_price_row > td.comparison_baseitem_column > span > span.a-offscreen'
 			],
-	'desc':["#detailBulletsWrapper_feature_div","#productDetails-placement-auto_feature_div","#prodDetails","#prodDetails"],
+	'desc':["#detailBulletsWrapper_feature_div","#productDetails-placement-auto_feature_div","#prodDetails","#prodDetails","#productDetails_feature_div"],
 	'seller_url':['#sellerProfileTriggerId']
 }
 
@@ -40,13 +40,13 @@ function paserDesc(str){
     //console.log("长度：",rets.length);
     if(rets.length == 0){
         rets = $(str).find("tr");
-        //console.log("长度1：",rets.length);
+        //console.log("长度1：",rets);
     }
 
     var ret_datas = [];
     for (var i = 0; i<= rets.length; i++){
-
         var new_texts = $(rets[i]).text();
+        //console.log("文本内容：",i,new_texts);
         new_texts = new_texts.replace(/\n/gm,"");
         new_texts = new_texts.replace("‎ ","")
         new_texts = new_texts.replace(" ‏","")
@@ -61,7 +61,6 @@ function paserDesc(str){
         new_texts = new_texts.replace(/\s{1,}/gm," ");
 
         if( new_texts!= ""){
-                //console.log("文本内容：",new_texts);
                 //console.log(new_texts.indexOf("Product Dimensions"));
             if (new_texts.indexOf("Weight") != -1 || new_texts.indexOf("Package Dimensions") != -1 || new_texts.indexOf("ASIN") != -1 || new_texts.indexOf("Reviews") != -1 || new_texts.indexOf("Best Sellers Rank") != -1 || new_texts.indexOf("Date First Available") != -1){
                 new_texts = new_texts.split(" (See Top 100")[0];
@@ -96,14 +95,10 @@ function paserDesc(str){
                         return "";
                     }
                 }
-
-
                 ret_datas.push(new_texts);
             }
 
         }
-
-
 
     }
     if(ret_datas.join("|").indexOf("Date First Available") == -1){
@@ -129,7 +124,7 @@ function product_extract(jqueryObj,selector,key){
 			if (key == "desc"){
 				if (ret.text() != ""){
                     var datas = paserDesc(ret.html())
-                    //console.log(datas,ret.html());
+                    //console.log(datas);
 					return datas;
 				}
 			}
