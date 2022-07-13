@@ -1,9 +1,9 @@
 
 {
     "manifest_version": 2,
-    "name": "SocketEXController",
+    "name": "detailcrawler",
     "version": "1.0.0",
-    "description": "Chrome SocketEXController",
+    "description": "product detail crawler",
     "author": "wjryours",
     "icons": {
         "48": "48.png",
@@ -16,7 +16,6 @@
     "background": {
         "persistent": true,
         "scripts": [ "commons.js", "jquery-3.6.0.min.js", "PaserConf.js", "extension-reload.js","background2.js" ]
-        //"page": "background.html"
     },
     "commands": {
         "Ctrl+M": {
@@ -29,9 +28,6 @@
     },
     "content_scripts": [
         {
-
-            // "matches": ["http://*/*", "https://*/*"],
-            // "<all_urls>" 表示匹配所有地址
             "matches": [
                 "<all_urls>"
             ],

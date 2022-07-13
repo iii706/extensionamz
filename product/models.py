@@ -104,7 +104,7 @@ class WordShip(models.Model):
 #产品信息表
 class Product(models.Model):
     seller = models.ForeignKey('SellerBase', on_delete=models.CASCADE)
-    title = models.CharField(verbose_name="标题",max_length=200)
+    title = models.CharField(verbose_name="标题",max_length=500)
     image = models.CharField(max_length=500,default='')
     product_dimensions = models.CharField(verbose_name="尺寸",max_length=200,default='')
     weight = models.CharField(verbose_name="重量",max_length=50,default='')

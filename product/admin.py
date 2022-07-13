@@ -24,7 +24,7 @@ class GuardedAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['id','IMAGE','title','cat',"last_rank",'last_review_count','add_date_first_available','show_mod_time']
+    list_display = ['id','IMAGE','title','price','cat',"last_rank",'last_review_count','add_date_first_available','show_mod_time']
     list_display_links = ['id'] #可以直接链接到编辑页面
     list_filter = ['cat']
     search_fields = ["title","asin"]

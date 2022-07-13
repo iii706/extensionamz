@@ -24,7 +24,7 @@ let product_Paser = {
 	'price':['#corePrice_feature_div > div > span > span.a-offscreen',
 			'#comparison_price_row > td.comparison_baseitem_column > span > span.a-offscreen'
 			],
-	'desc':["#detailBulletsWrapper_feature_div","#productDetails-placement-auto_feature_div","#prodDetails"],
+	'desc':["#detailBulletsWrapper_feature_div","#productDetails-placement-auto_feature_div","#prodDetails","#prodDetails"],
 	'seller_url':['#sellerProfileTriggerId']
 }
 
@@ -121,7 +121,9 @@ function product_extract(jqueryObj,selector,key){
 			var ret = jqueryObj.find(selector[i]);
 			if (key == "price"){
 				if(ret.length == 0){
-					return 0.0;
+					return "$0.0";
+				} else {
+				return "$"+$.trim(ret.text().split("$")[1]).toString()
 				}
 			}
 			if (key == "desc"){

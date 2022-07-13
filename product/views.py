@@ -32,6 +32,7 @@ def get_list_url(request):
         if len(ret_urls) == 0: ##已经抓取完了，看需不需要重新抓取？
             url[0].start_page = 1
             url[0].save()
+            settings.REDIS_BL.delete(settings.LIST_URL_FILTER)
 
         return HttpResponse(json.dumps({"msg":1,"urls": ret_urls,"url_id":url_id,'current_page':current_page}))
     else:
@@ -91,15 +92,16 @@ def add_asin_url(request):
 
 
 def product_content_post(request):
-    seller_id = request.GET["seller_id"]
+    data = json.loads(request.body.decode("utf-8"))
+    seller_id = data["seller_id"]
     seller, b = SellerBase.objects.get_or_create(seller_id=seller_id)
 
-    title = request.GET['title']
-    image = request.GET['image']
-    price = request.GET['price'].replace("$","").replace("US","")
-    desc = request.GET['desc']
-    asin = request.GET['asin']
-
+    title = data['title']
+    image = data['image']
+    price = data['price'].replace("$","").replace("US","")
+    desc = data['desc']
+    asin = data['asin']
+    data_ret = data['ret']
 
 
     desc = desc.replace("\u200e",'')
@@ -164,7 +166,11 @@ def product_content_post(request):
         'cat':cat,
 
     }
-    if cat != "#NA":
+    if asin != "": #删除信息
+        settings.REDIS_BL.cfAddNX(settings.DETSIL_URL_FILTER, asin)
+        settings.REDIS_CONN.srem(settings.DETAIL_URL_QUEUE, asin)
+
+    if cat != "#NA" and data_ret == 1:
         p,b = Product.objects.get_or_create(asin=asin,defaults=defaults)
         print("查找结果：",p,b)
         if b == False:
@@ -173,6 +179,6 @@ def product_content_post(request):
             if day >= 1:
                 p2,b2 = Product.objects.update_or_create(defaults=defaults,asin=asin)
                 print("更新结果：",b2)
-
-
-    return HttpResponse({'mes':'1'})
+        return HttpResponse(json.dumps({"msg":"1"}))
+    else:
+        return HttpResponse(json.dumps({"msg":"0"}))
