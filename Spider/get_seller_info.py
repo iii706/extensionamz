@@ -49,7 +49,7 @@ for sellerbase in sellerbases:
         page = get_page_content(seller_id)
         selector = etree.HTML(page.text)
         title = selector.xpath("//title/text()")
-        sellerbase.brand_name = ''.join(selector.xpath('//*[@id="sellerName-rd"]/text()'))
+        sellerbase.brand_name = ''.join(selector.xpath('//*[@id="sellerName-rd"]/text()')).replace("👏",'')
         ratings_infos = selector.xpath('//table[@id="feedback-summary-table"]//tr[5]//td//text()')
         if len(ratings_infos) == 5:
             sellerbase.last_days_30_ratings = ratings_infos[1].replace(",","")
