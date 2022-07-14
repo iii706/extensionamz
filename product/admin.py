@@ -46,10 +46,13 @@ class RankAdmin(admin.ModelAdmin):
 
 @admin.register(SellerBase)
 class SellerBaseAdmin(admin.ModelAdmin):
-    list_display = ['id','seller_id','brand_name','country','last_product_counts','last_days_30_ratings','last_days_90_ratings','last_year_ratings','last_life_ratings','show_add_time','show_mod_time']
+    list_display = ['id','SELL_LINK','brand_name','country','last_product_counts','last_days_30_ratings','last_days_90_ratings','last_year_ratings','last_life_ratings','show_add_time','show_mod_time']
     list_filter = ['country','display']
 
+    def SELL_LINK(self,obj):
+        return format_html("<a href='https://www.amazon.com/s?me={seller_id}&marketplaceID=ATVPDKIKX0DER' target='blank'>{seller_id}</a>",seller_id=obj.seller_id)
 
+    SELL_LINK.short_description = "卖家链接"
 
 
 @admin.register(Review)
