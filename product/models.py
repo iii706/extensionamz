@@ -6,16 +6,25 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from redisbloom.client import Client
 from django.conf import settings
-
+#Url类型
+class UrlType(models.Model):
+    url_type = models.CharField(verbose_name="url类型", max_length=20, default="cat")
+    comment = models.CharField(verbose_name="备注", max_length=20,default="")
+    def __str__(self):
+        return self.url_type +'|'+self.comment
+    class Meta:
+        verbose_name = "抓取链接类型"
+        verbose_name_plural = verbose_name  # admin不显示s复数
 
 
 #初始Url链接
 class Url(models.Model):
-    start_url = models.CharField(verbose_name="初始链接地址",max_length=300)
+    start_url = models.CharField(verbose_name="初始链接地址",max_length=500)
     start_page = models.IntegerField(verbose_name="开始页数",default=1)
     end_page = models.IntegerField(verbose_name="结束页数",default=200)
     page_replace_pattern = models.CharField(verbose_name="上一页替换字符",max_length=10,default="<page>")
     pre_page_replace_pattern = models.CharField(verbose_name="上一页替换字符",max_length=20,default="<pre_page>")
+    urltype = models.ForeignKey("UrlType", on_delete=models.CASCADE)
     add_time = models.DateTimeField("保存日期", default=timezone.now)
     mod_time = models.DateTimeField("最后修改日期", auto_now=True)
     def show_add_time(self):

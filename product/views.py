@@ -46,7 +46,7 @@ def get_asin_url(request):
     count = request.GET["count"]
     asins = []
 
-    asins_ret = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE,number=20)
+    asins_ret = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE,number=int(count)*2)
     for asin in asins_ret:
         if asin and settings.REDIS_BL.cfExists(settings.DETSIL_URL_FILTER, asin) != 1:
             asins.append(asin.decode())

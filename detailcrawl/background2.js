@@ -135,7 +135,7 @@ function callback(res){
             var request_obj = {
                 request:f1,
                 asin:asins[i],
-                //asin:'B09ZT2H2FV',
+                //asin:'B0B3NG5TMM',
             }
             detailRequest.pushQueue(request_obj);
         }

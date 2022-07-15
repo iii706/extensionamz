@@ -1,12 +1,18 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from product.models import Product,Rank,Review,SellerBase,SellerDetail,Url
+from product.models import Product,Rank,Review,SellerBase,SellerDetail,Url,UrlType
 
 from django.contrib import admin
 
 admin.site.site_title="亚马逊产品数据"
 admin.site.site_header="亚马逊产品数据管理"
 admin.site.index_title="欢迎登陆，选择以下信息进入："
+
+#@admin.register(UrlType)
+class UrlTypeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'url_type','comment']
+
+
 
 @admin.register(Url)
 class UrlAdmin(admin.ModelAdmin):
