@@ -43,7 +43,6 @@ let detailRequest = {
                     'desc':product_extract(jqueryObj,product_Paser.desc,"desc"),
                 };
 
-                console.log("price",data.price);
                 var seller_url = product_extract(jqueryObj,product_Paser.seller_url,"seller_url");
                 data['seller_id'] = "";
                 if(seller_url != "" && seller_url != undefined) {
@@ -51,7 +50,7 @@ let detailRequest = {
                         data['seller_id'] = seller_url.split("seller=")[1].split("&")[0]
                     }
                 }
-                console.log("卖家链接是：",data,item.asin != undefined && data.desc != undefined && data.desc != "" && data.seller_id != "");
+                //console.log("卖家链接是：",data,item.asin != undefined && data.desc != undefined && data.desc != "" && data.seller_id != "");
                 if(item.asin != undefined && data.desc != undefined && data.desc != "" && data.seller_id != ""){
                     data['ret'] = 1;
                 } else {
@@ -84,7 +83,28 @@ let detailRequest = {
                 if (this.state.length == 4){
                     chrome.runtime.reload();
                 }
-                }).catch(e => console.log(e));
+                }).catch(e => {
+                    if (e.status === 404) {
+                        var data = {
+                            'ret':2,
+                            'asin':item.asin
+                        }
+                        console.log("异常404了"); //找不到这个asin，提交删除的请求
+                        let options = {
+                                method: 'POST',//post请求
+                                headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(data)
+                                }
+                        fetch(product_content_post_url,options).then(
+                        response => response.json()
+                        ).then(
+                            res=>console.log(res)
+                        );
+                        }
+                });
             }
         }
     },
@@ -95,11 +115,20 @@ function callback(res){
     msg = res.msg;
     if (msg == 1){
         asins = res.asins;
-        console.log(asins)
+        //console.log(asins)
         for (var i = 0; i < asins.length ; i++  ){
             function f1(url) {
             return new Promise((resolve, reject) => {
-                    resolve(fetch(url).then(response => response.text())
+                    resolve(fetch(url).then(response => {
+                            if(response.ok){
+                                return response.text(); //200代码
+                            }else{
+                               return Promise.reject({ //异常抛出意外
+                                status: response.status,
+                                statusText: response.statusText
+                                })
+                            }
+                        })
                     )
                 })
             }

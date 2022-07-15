@@ -12,29 +12,31 @@ import json
 
 def get_list_url(request):
     count = request.GET['count']
-    url = Url.objects.all().order_by("mod_time")
+    urls = Url.objects.all().order_by("mod_time")
     ret_urls = []
-    if len(url) > 0:
-        start_url = url[0].start_url
-        url_id = url[0].id
-        start_page = url[0].start_page
-        end_page = url[0].end_page
-        current_page = start_page
-        for page in range(start_page,end_page):
-            ret_url = start_url.replace('<page>',str(page)).replace("<pre_page>",str(page-1))
-            print(page,end_page,settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url),ret_url)
-            if settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url) != 1:
-                ret_urls.append(ret_url)
-            if len(ret_urls) >= int(count):
-                current_page = page
-                break
-        print(ret_urls)
-        if len(ret_urls) == 0: ##已经抓取完了，看需不需要重新抓取？
-            url[0].start_page = 1
-            url[0].save()
-            settings.REDIS_BL.delete(settings.LIST_URL_FILTER)
+    if len(urls) > 0:
+        for url in urls:
+            if (url.mod_time - url.add_time).days == 0 or (timezone.now() - url.mod_time).days > 3:
+                start_url = url.start_url
+                url_id = url.id
+                start_page = url.start_page
+                end_page = url.end_page
+                current_page = start_page
+                for page in range(start_page,end_page):
+                    ret_url = start_url.replace('<page>',str(page)).replace("<pre_page>",str(page-1))
+                    #print(page,end_page,settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url),ret_url)
+                    if settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url) != 1:
+                        ret_urls.append(ret_url)
+                    if len(ret_urls) >= int(count):
+                        current_page = page
+                        break
+                #print(ret_urls)
+                if len(ret_urls) == 0: ##已经抓取完了，看需不需要重新抓取？
+                    url.start_page = 1
+                    url.save()
+                    settings.REDIS_BL.delete(settings.LIST_URL_FILTER)
 
-        return HttpResponse(json.dumps({"msg":1,"urls": ret_urls,"url_id":url_id,'current_page':current_page}))
+                return HttpResponse(json.dumps({"msg":1,"urls": ret_urls,"url_id":url_id,'current_page':current_page}))
     else:
         return HttpResponse(json.dumps({"msg":0}))
 
@@ -80,7 +82,7 @@ def add_asin_url(request):
     current_url = data['current_url']
     url_id = data['url_id']
     current_page = data['current_page']
-    print(request,asins,current_url)
+    #print(request,asins,current_url)
     if asins != '':
         asin_arr = [asin for asin in asins.split("|")]
         pipe = settings.REDIS_CONN.pipeline()
@@ -98,15 +100,24 @@ def add_asin_url(request):
 
 def product_content_post(request):
     data = json.loads(request.body.decode("utf-8"))
+
+    data_ret = data['ret']
+    asin = data['asin']
+    if data_ret == 2:  #404的asin返回
+        settings.REDIS_BL.cfAddNX(settings.DETSIL_URL_FILTER, asin)
+        settings.REDIS_CONN.srem(settings.DETAIL_URL_QUEUE, asin)
+        return HttpResponse(json.dumps({"msg": "0"}))
+
+    #print("asin",asin)
+
     seller_id = data["seller_id"]
     seller, b = SellerBase.objects.get_or_create(seller_id=seller_id)
-
     title = data['title']
     image = data['image']
     price = data['price'].replace("$","").replace("US","")
     desc = data['desc']
-    asin = data['asin']
-    data_ret = data['ret']
+
+
 
 
     desc = desc.replace("\u200e",'')
@@ -154,7 +165,6 @@ def product_content_post(request):
     if rank == '':
         rank = 999999
 
-    print(desc)
     print([product_dimensions, weight, date_first_available, asin, rank,cat, review_counts, ratings])
 
     defaults = {
@@ -171,7 +181,9 @@ def product_content_post(request):
         'cat':cat,
 
     }
-    if asin != "": #删除信息
+    asin = data['asin']
+    #print('asin2:',asin)
+    if asin != "": #ret为0，1都要删除asin的key
         settings.REDIS_BL.cfAddNX(settings.DETSIL_URL_FILTER, asin)
         settings.REDIS_CONN.srem(settings.DETAIL_URL_QUEUE, asin)
 
@@ -184,6 +196,7 @@ def product_content_post(request):
             if day >= 1:
                 p2,b2 = Product.objects.update_or_create(defaults=defaults,asin=asin)
                 print("更新结果：",b2)
+
         return HttpResponse(json.dumps({"msg":"1"}))
     else:
         return HttpResponse(json.dumps({"msg":"0"}))

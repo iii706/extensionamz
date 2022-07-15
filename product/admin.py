@@ -10,7 +10,7 @@ admin.site.index_title="欢迎登陆，选择以下信息进入："
 
 @admin.register(Url)
 class UrlAdmin(admin.ModelAdmin):
-    list_display = ['id', 'start_url', 'start_page', 'end_page', "page_replace_pattern", 'pre_page_replace_pattern','show_mod_time']
+    list_display = ['id', 'start_url', 'start_page', 'end_page', "page_replace_pattern", 'pre_page_replace_pattern','show_add_time','show_mod_time']
 
 
 # Register your models here.
@@ -42,6 +42,7 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(Rank)
 class RankAdmin(admin.ModelAdmin):
     list_display = ['id','product','rank','show_add_time','show_mod_time']
+    search_fields = ["product__title","product__asin"]  ##外键search_fields需要双下划线
 
 
 @admin.register(SellerBase)
