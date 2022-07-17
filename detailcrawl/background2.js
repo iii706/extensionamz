@@ -35,15 +35,27 @@ let detailRequest = {
                product_url = 'https://www.amazon.com/dp/'+item.asin
                item.request(product_url).then(res => {
                 var jqueryObj = $(res);
+
+                var default_Paser = product_Paser
+                var mobile_flag = false
+                var title_ret = jqueryObj.find("#productTitle")//判断是否是手机页面
+
+                if(title_ret.length == 0 ){
+                    default_Paser = mobile_product_Paser;
+                    mobile_flag = true
+                }
+
+                //console.log("是否手机页面：",title_ret,default_Paser,mobile_flag);
+
                 var data = {
-                    'title':product_extract(jqueryObj,product_Paser.title,"title"),
-                    'image':product_extract(jqueryObj,product_Paser.image,"image"),
+                    'title':product_extract(jqueryObj,default_Paser.title,"title"),
+                    'image':product_extract(jqueryObj,default_Paser.image,"image"),
                     'asin':item.asin,
-                    'price':product_extract(jqueryObj,product_Paser.price,"price"),
-                    'desc':product_extract(jqueryObj,product_Paser.desc,"desc"),
+                    'price':product_extract(jqueryObj,default_Paser.price,"price"),
+                    'desc':product_extract(jqueryObj,default_Paser.desc,"desc",mobile_flag),
                 };
 
-                var seller_url = product_extract(jqueryObj,product_Paser.seller_url,"seller_url");
+                var seller_url = product_extract(jqueryObj,default_Paser.seller_url,"seller_url");
                 data['seller_id'] = "";
                 if(seller_url != "" && seller_url != undefined) {
                     if (seller_url.indexOf("seller=") != -1){
@@ -64,13 +76,14 @@ let detailRequest = {
                                 },
                                 body: JSON.stringify(data)
                         }
+                console.log(data);
                 fetch(product_content_post_url,options).then(
                 response => response.json()
                 ).then(
                     res=>console.log(res)
                 );
 
-                //post_to_locale(data);
+
                 res = null;
                 this.backToken(item.token); // 令牌归还
 

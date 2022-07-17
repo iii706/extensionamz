@@ -18,6 +18,15 @@ let seller_Paser = {
 	'business_addr':['div.a-row.a-spacing-none.indent-left']
     }
 
+let mobile_product_Paser = {
+	'title':['#title'],
+	'image':['#main-image'],
+	'price':['span.a-price.aok-align-center.reinventPricePriceToPayMargin.priceToPay > span.a-offscreen'
+			],
+	'desc':["#productDetails_secondary_view_div"],
+	'seller_url':['#sellerProfileTriggerId']
+}
+
 let product_Paser = {
 	'title':['#productTitle'],
 	'image':['#landingImage'],
@@ -31,17 +40,31 @@ let product_Paser = {
 
 
 //解析产品详细信息方法
-function paserDesc(str){
+function paserDesc(str,mobile_flag){
     var myRe = /<script[\s\S]*<\/script>/gm;
     str = str.replace(myRe,"");
     var myRe2 = /<style[\s\S]*<\/style>/gm;
     str = str.replace(myRe2,"");
-    var rets = $(str).find("span.a-list-item");
-    //console.log("长度：",rets.length);
-    if(rets.length == 0){
-        rets = $(str).find("tr");
-        //console.log("长度1：",rets);
+    var rets = []
+    if(mobile_flag == true){
+        var rets1 = $(str).find("tr")
+        var rets2 = $(str).find("span.a-list-item")
+
+        for(var i = 0; i< rets1.length; i++){
+            rets.push(rets1[i])
+        }
+        for(var i = 0; i< rets2.length; i++){
+            rets.push(rets2[i])
+        }
+    } else {
+        rets = $(str).find("span.a-list-item");
+        //console.log("长度：",rets.length);
+        if(rets.length == 0){
+            rets = $(str).find("tr");
+            //console.log("长度1：",rets);
+        }
     }
+
 
     var ret_datas = [];
     for (var i = 0; i<= rets.length; i++){
@@ -110,7 +133,7 @@ function paserDesc(str){
 }
 
 //解析产品页面
-function product_extract(jqueryObj,selector,key){
+function product_extract(jqueryObj,selector,key,mobile_flag){
 	for (var i = 0; i <= selector.length; i++){
 		if (typeof(selector[i]) != "undefined"){
 			var ret = jqueryObj.find(selector[i]);
@@ -123,7 +146,7 @@ function product_extract(jqueryObj,selector,key){
 			}
 			if (key == "desc"){
 				if (ret.text() != ""){
-                    var datas = paserDesc(ret.html())
+                    var datas = paserDesc(ret.html(),mobile_flag)
                     //console.log(datas);
 					return datas;
 				}
@@ -152,7 +175,3 @@ function product_extract(jqueryObj,selector,key){
 	}
 }
 
-
-function seller_extract(jqueryObj,selector,key){
-
-}

@@ -12,7 +12,7 @@ import json
 
 def get_list_url(request):
     count = request.GET['count']
-    urls = Url.objects.all().order_by("mod_time")
+    urls = Url.objects.all().order_by("id")
     ret_urls = []
     if len(urls) > 0:
         for url in urls:
@@ -21,17 +21,17 @@ def get_list_url(request):
                 url_id = url.id
                 start_page = url.start_page
                 end_page = url.end_page
-                current_page = start_page
                 for page in range(start_page,end_page+1):
                     ret_url = start_url.replace('<page>',str(page)).replace("<pre_page>",str(page-1))
                     #print(page,end_page,settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url),ret_url)
                     if settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url) != 1:
-                        ret_urls.append(ret_url)
+                        ret_urls.append({"url":ret_url,"current_page":page})
                     if len(ret_urls) >= int(count):
-                        current_page = page
                         break
+
+                #print(ret_urls)
                 return HttpResponse(
-                    json.dumps({"msg": 1, "urls": ret_urls, "url_id": url_id, 'current_page': current_page}))
+                    json.dumps({"msg": 1, "urls": ret_urls, "url_id": url_id}))
             elif (timezone.now() - url.add_time).days >= 3:
                 ##已经抓取完了，看需不需要重新抓取？
                 url.start_page = 1
@@ -47,7 +47,7 @@ def get_asin_url(request):
     count = request.GET["count"]
     asins = []
 
-    asins_ret = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE,number=int(count)*2)
+    asins_ret = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE,number=20)
     for asin in asins_ret:
         if asin and settings.REDIS_BL.cfExists(settings.DETSIL_URL_FILTER, asin) != 1:
             asins.append(asin.decode())
@@ -155,7 +155,7 @@ def product_content_post(request):
             rank = item.replace("Best Sellers Rank","").split(' in ')[0].replace('#', '').replace(',', '').strip()
             cat = item.replace("Best Sellers Rank","").split(' in ')[-1].replace("(","").strip()
         if item.find('Customer Reviews') != -1:
-            review_counts = item.replace("Customer Reviews","").split('out of 5 stars')[-1].replace("ratings","").replace("rating","").replace(',', '').strip()
+            review_counts = item.replace("Customer Reviews","").split('out of 5 stars')[-1].replace("ratings","").replace("rating","").replace("Reviews","").replace("Review","").replace(',', '').strip()
             ratings = item.replace("Customer Reviews","").split('out of 5 stars')[0].strip()
 
     if review_counts == '':

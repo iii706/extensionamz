@@ -122,9 +122,9 @@ function callback(res){
             }
             var request_obj = {
                 request:f1,
-                url:urls[i],
+                url:urls[i].url,
                 url_id:res.url_id,
-                current_page:res.current_page
+                current_page:urls[i].current_page
             }
             listRequest.pushQueue(request_obj);
         }
@@ -136,9 +136,17 @@ function callback(res){
        console.log("没有获取到初始url");
     }
 }
+//setTimeout(function(){fetch(start_url).then(
+//    response => response.json()
+//).then(
+//    res=>callback(res)
+//)}, 3000*10)
+
+
 fetch(start_url).then(
     response => response.json()
 ).then(
     res=>callback(res)
-);
+)
+
 
