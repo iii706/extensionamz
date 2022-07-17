@@ -32,13 +32,25 @@ let listRequest = {
                console.log("正在采集：",item.url);
                item.request(item.url).then(res => {
                     var jqueryObj = $(res);
-                    var rets = jqueryObj.find("#search > div.s-desktop-width-max.s-desktop-content.s-opposite-dir.sg-row > div.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span:nth-child(4) > div.s-main-slot.s-result-list.s-search-results.sg-row > div")
+
+                    var filter_ret = jqueryObj.find("#s-all-filters");//判断是否是手机页面
+                    var list_div_css_selector = '#search > div.s-desktop-width-max.s-desktop-content.s-opposite-dir.sg-row > div.s-matching-dir.sg-col-16-of-20.sg-col.sg-col-8-of-12.sg-col-12-of-16 > div > span:nth-child(4) > div.s-main-slot.s-result-list.s-search-results.sg-row > div';
+                    var review_counts_css_selector = "span.a-size-base.s-underline-text"
+                    var price_css_selector = "div.a-row.a-size-base.a-color-base > a > span:nth-child(1) > span.a-offscreen"
+                    if(filter_ret.length > 0){
+                        list_div_css_selector = "div.s-main-slot.s-result-list.s-search-results.sg-row > div";
+                        review_counts_css_selector = "span.a-size-mini.a-color-base.s-light-weight-text";
+                        price_css_selector = "a.a-link-normal.s-faceout-link.a-text-normal > span.a-price > span.a-offscreen";
+                    }
+
+
+                    var rets = jqueryObj.find(list_div_css_selector)
                     var asins = [];
                     for(var i = 0; i <= rets.length; i++){
                         var asin = $(rets[i]).attr("data-asin");
                         if(asin != "" && asin != undefined){
-                            var review_counts = $(rets[i]).find("span.a-size-base.s-underline-text").text();
-                            var price = $(rets[i]).find("div.a-row.a-size-base.a-color-base > a > span:nth-child(1) > span.a-offscreen").text();
+                            var review_counts = $(rets[i]).find(review_counts_css_selector).text();
+                            var price = $(rets[i]).find(price_css_selector).text();
                             //console.log(asin,review_counts,price);
                             var detail_url_obj = {
                                 'url':"https://www.amazon.com/dp/"+asin,
@@ -56,7 +68,7 @@ let listRequest = {
                     }
 
                     res = null;
-
+                    console.log(asins);
                     if(asins.length > 0){
 
                         let options = {
@@ -99,7 +111,6 @@ let listRequest = {
 function callback(res){
     msg = res.msg;
     if (msg == 1){
-
         urls = res.urls;
         console.log(urls)
         for (var i = 0; i < urls.length ; i++  ){
@@ -119,6 +130,8 @@ function callback(res){
         }
         listRequest.start();
 
+    } else if(msg == 2) {
+       chrome.runtime.reload();
     } else {
        console.log("没有获取到初始url");
     }

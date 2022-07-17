@@ -16,13 +16,13 @@ def get_list_url(request):
     ret_urls = []
     if len(urls) > 0:
         for url in urls:
-            if (url.mod_time - url.add_time).days == 0 or (timezone.now() - url.mod_time).days > 3:
+            if url.start_page < url.end_page:
                 start_url = url.start_url
                 url_id = url.id
                 start_page = url.start_page
                 end_page = url.end_page
                 current_page = start_page
-                for page in range(start_page,end_page):
+                for page in range(start_page,end_page+1):
                     ret_url = start_url.replace('<page>',str(page)).replace("<pre_page>",str(page-1))
                     #print(page,end_page,settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url),ret_url)
                     if settings.REDIS_BL.cfExists(settings.LIST_URL_FILTER, ret_url) != 1:
@@ -30,15 +30,16 @@ def get_list_url(request):
                     if len(ret_urls) >= int(count):
                         current_page = page
                         break
-                #print(ret_urls)
-                if len(ret_urls) == 0: ##已经抓取完了，看需不需要重新抓取？
-                    url.start_page = 1
-                    url.save()
-                    settings.REDIS_BL.delete(settings.LIST_URL_FILTER)
-
-                return HttpResponse(json.dumps({"msg":1,"urls": ret_urls,"url_id":url_id,'current_page':current_page}))
-    else:
-        return HttpResponse(json.dumps({"msg":0}))
+                return HttpResponse(
+                    json.dumps({"msg": 1, "urls": ret_urls, "url_id": url_id, 'current_page': current_page}))
+            elif (timezone.now() - url.add_time).days >= 3:
+                ##已经抓取完了，看需不需要重新抓取？
+                url.start_page = 1
+                url.add_time = timezone.now() #更新保存的时间
+                url.save()
+                settings.REDIS_BL.delete(settings.LIST_URL_FILTER)
+                return HttpResponse(json.dumps({"msg": 2})) #需要采集器刷新
+    return HttpResponse(json.dumps({"msg":0}))
 
 
 #获取一条待爬取list链接

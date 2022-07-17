@@ -30,7 +30,8 @@ class Url(models.Model):
     def show_add_time(self):
         return self.add_time.strftime('%Y-%m-%d %H:%M:%S')
     show_add_time.admin_order_field = 'add_time'
-    show_add_time.short_description = '抓取时间'
+    show_add_time.short_description = '添加时间'
+
 
     def show_mod_time(self):
         return self.mod_time.strftime('%Y-%m-%d %H:%M:%S')
