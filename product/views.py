@@ -29,7 +29,7 @@ def get_list_url(request):
                     if len(ret_urls) >= int(count):
                         break
 
-                #print(ret_urls)
+                #print(url.id,ret_urls)
                 return HttpResponse(
                     json.dumps({"msg": 1, "urls": ret_urls, "url_id": url_id}))
             elif (timezone.now() - url.add_time).days >= 3:
@@ -42,21 +42,25 @@ def get_list_url(request):
     return HttpResponse(json.dumps({"msg":0}))
 
 
+
 #获取一条待爬取list链接
+#/product/get_asin_url/?count=8  #获取正常产品监控的asins
+#/product/get_asin_url/?count=8&seller=1  #获取卖家id的asins来抓取，这个过滤器不会删除的
+
 def get_asin_url(request):
     count = request.GET["count"]
-    asins = []
+    default_queue = settings.DETAIL_URL_QUEUE
+    try:
+        seller = request.GET["seller"]  #如果有传seller参数=1，则是抓取卖家id的asin
+        if seller == "1":
+            default_queue = settings.SELLER_URL_QUEUE
+    except Exception as e:
+        print(e)
 
-    asins_ret = settings.REDIS_CONN.srandmember(settings.DETAIL_URL_QUEUE,number=count)
-    for asin in asins_ret:
-        #if asin and settings.REDIS_BL.cfExists(settings.DETSIL_URL_FILTER, asin) != 1:
-        asins.append(asin.decode())
-    #     else:
-    #         settings.REDIS_CONN.srem(settings.DETAIL_URL_QUEUE, asin)
-    #     if len(asins) == int(count):
-    #         break
-    if len(asins) > 0:
-        return HttpResponse(json.dumps({"msg":1,"asins":asins}))
+    asins_ret = settings.REDIS_CONN.srandmember(default_queue,number=int(count))
+    print(asins_ret)
+    if len(asins_ret) > 0:
+        return HttpResponse(json.dumps({"msg":1,"asins":[i.decode() for i in asins_ret]}))
     else:
         return HttpResponse(json.dumps({"msg":0,"asins": ""}))
 
@@ -86,11 +90,26 @@ def add_asin_url(request):
     #print(request,asins,current_url)
     if asins != '':
         asin_arr = [asin for asin in asins.split("|")]
+        #print(asin_arr)
+        #加入抓取卖家id的asin队列，先过滤再加入
+        ex_rets = settings.REDIS_BL.bfMExists(settings.SELLER_ASIN_FILTER, *(i for i in asin_arr))
+        noex_asins = []
+        for item in zip(ex_rets,asin_arr):
+            if item[0] == 0:
+                noex_asins.append(item[1])
+        #print("noex_asins",noex_asins)
+        pipe = settings.REDIS_CONN.pipeline()
+        for asin in noex_asins:
+            pipe.sadd(settings.SELLER_URL_QUEUE, asin)
+        pipe.execute()
+
+        #加入监控asin或符合队列
         pipe = settings.REDIS_CONN.pipeline()
         for asin in asin_arr:
             pipe.sadd(settings.DETAIL_URL_QUEUE,asin)
         pipe.execute()
         settings.REDIS_BL.cfAddNX(settings.LIST_URL_FILTER,current_url)
+
     if url_id != "" and current_page != '':
         r = Url.objects.get(id=url_id)
         r.start_page = current_page
@@ -106,7 +125,19 @@ def product_content_post(request):
     if data_ret == 2:  #404的asin返回
         settings.REDIS_BL.cfAddNX(settings.DETSIL_URL_FILTER, asin)
         settings.REDIS_CONN.srem(settings.DETAIL_URL_QUEUE, asin)
-        return HttpResponse(json.dumps({"msg": "0"}))
+        return HttpResponse(json.dumps({"msg": 0}))
+
+    if data_ret == 3200: #只抓取卖家id:
+        seller_id = data["seller_id"]
+        seller, b = SellerBase.objects.get_or_create(seller_id=seller_id)
+        settings.REDIS_BL.bfMAdd(settings.SELLER_ASIN_FILTER, asin)
+        settings.REDIS_CONN.srem(settings.SELLER_URL_QUEUE, asin)
+        return HttpResponse(json.dumps({"msg": 1,'ret':3200}))
+
+    if data_ret == 3404: #抓取卖家id出现404
+        settings.REDIS_BL.bfMAdd(settings.SELLER_ASIN_FILTER, asin)
+        settings.REDIS_CONN.srem(settings.SELLER_URL_QUEUE, asin)
+        return HttpResponse(json.dumps({"msg": 0, 'ret': 3404}))
 
     #print("asin",asin)
 
@@ -197,6 +228,6 @@ def product_content_post(request):
                 p2,b2 = Product.objects.update_or_create(defaults=defaults,asin=asin)
                 print("更新结果：",b2)
 
-        return HttpResponse(json.dumps({"msg":"1"}))
+        return HttpResponse(json.dumps({"msg":1}))
     else:
-        return HttpResponse(json.dumps({"msg":"0"}))
+        return HttpResponse(json.dumps({"msg":0}))

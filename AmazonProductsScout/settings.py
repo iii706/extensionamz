@@ -143,15 +143,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #CSP_REPORT_URI = ["http://127.0.0.1:8000/product/post"]
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240 # higher than the count of fields
 
-LIST_URL_QUEUE = "list_wait_queue"
-DETAIL_URL_QUEUE = "detail_wait_queue"
-LIST_URL_FILTER = 'list_url_filter'
-DETSIL_URL_FILTER = 'detail_url_filter' #asin页面filter
+LIST_URL_QUEUE = "list_wait_queue" #列表等待抓取队列
+LIST_URL_FILTER = 'list_url_filter'#列表抓取过滤
+
+DETAIL_URL_QUEUE = "detail_wait_queue" #asin监控或采集时等待队列
+DETSIL_URL_FILTER = 'detail_url_filter' #asin监控或采集时过滤，或考虑超时自动删除
+
+SELLER_URL_QUEUE = "seller_url_queue" #采集卖家id时asin等待队列
+SELLER_ASIN_FILTER = 'seller_url_filter' #采集卖家id时用，过滤用，不删除
 
 REDIS_IP = '106.54.94.94'
 REDIS_PORT = 6379
 REDIS_PWD = 'foobared123'
-
 REDIS_POOL = redis.ConnectionPool(host=REDIS_IP, port=REDIS_PORT,password=REDIS_PWD,db=0)
 REDIS_CONN = redis.Redis(connection_pool= REDIS_POOL)
 REDIS_BL = Client(host=REDIS_IP, port=REDIS_PORT,password=REDIS_PWD)
