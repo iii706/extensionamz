@@ -87,7 +87,7 @@ DATABASES = {
         #'NAME': BASE_DIR / 'db.sqlite3',
         'NAME': 'extensionamz',
         'USER': 'extensionamz',
-        'PASSWORD': 'ADTsXbwd5JYK5RZr',
+        'PASSWORD': '123',
         'HOST': '106.54.94.94',
         'PORT': '3306',
         'OPTIONS': {
@@ -154,7 +154,7 @@ SELLER_ASIN_FILTER = 'seller_url_filter' #采集卖家id时用，过滤用，不
 
 REDIS_IP = '106.54.94.94'
 REDIS_PORT = 6379
-REDIS_PWD = 'foobared123'
+REDIS_PWD = '21321'
 REDIS_POOL = redis.ConnectionPool(host=REDIS_IP, port=REDIS_PORT,password=REDIS_PWD,db=0)
 REDIS_CONN = redis.Redis(connection_pool= REDIS_POOL)
 REDIS_BL = Client(host=REDIS_IP, port=REDIS_PORT,password=REDIS_PWD)
